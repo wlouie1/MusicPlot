@@ -1,32 +1,141 @@
 'use strict';
 
-const example_midis = [
-    'resources/data/mozart_eine_kleine.mid'
+const example_music = [
+    'resources/data/mozart_eine_kleine'
 ];
 
-const viewModel = new ViewModel();
-
 // ==================================================
-
 /**
- * Handles the rendering of the music selection region.
+ * Application Model
  */
-function MidiInputManager(viewModel) {
-    this._viewModel = viewModel;
+function ViewModel(elem) {
+    this._elem = elem;
+    this._midiInputManager = new MidiInputManager(this);
+
+    let vizContainer = this._elem.querySelector('.viz-container');
+    this._vizManager = new VisualizationManager(vizContainer, this);
 }
 
-MidiInputManager.prototype.render = function() {
+ViewModel.prototype.getElem = function() {
+    return this._elem;
+};
+
+ViewModel.prototype.setMidi = function(midi) {
+    this._midi = midi;
+};
+
+ViewModel.prototype.getMidi = function() {
+    return this._midi;
+};
+
+ViewModel.prototype.setMusicDisplay = function(osmd) {
+    this._osmd = osmd;
+};
+
+ViewModel.prototype.getMusicDisplay = function() {
+    return this._osmd;
+};
+
+ViewModel.prototype.getVisualizationManager = function() {
+    return this._vizManager;
+};
+
+ViewModel.prototype.render = function() {
+    if (this._midi == null) {
+        return;
+    }
+
+    this._vizManager.render();
+};
+
+// ==================================================
+/**
+ * Handles the rendering of the visualization.
+ */
+function VisualizationManager(elem, viewModel) {
+    this._elem = elem;
+    this._viewModel = viewModel;
+
+    let matrixContainer = this._elem.querySelector('.sim-matrix-container');
+    this._matrixViz = new SimilarityVizManager(matrixContainer, this);
+
+    let musicContainer = this._elem.querySelector('.music-container');
+    this._music = new SheetMusicPlayerManager(musicContainer, this);
+}
+
+VisualizationManager.prototype.getElem = function() {
+    return this._elem;
+};
+
+VisualizationManager.prototype.getViewModel = function() {
+    return this._viewModel;
+};
+
+VisualizationManager.prototype.getSheetMusicPlayerManager = function() {
+    return this._music;
+};
+
+VisualizationManager.prototype.render = function() {
+    this._matrixViz.render();
+    this._music.render();
+};
+
+// ==================================================
+/**
+ * Handles the rendering of the similarity matrix and controls
+ */
+function SimilarityVizManager(elem, vizManager) {
+    this._elem = elem;
+    this._vizManager = vizManager;
+
+    let matrixContainer = this._elem.querySelector('.sim-matrix');
+    this._matrix = new SimilarityMatrixManager(matrixContainer, this);
+}
+
+SimilarityVizManager.prototype.getElem = function() {
+    return this._elem;
+};
+
+SimilarityVizManager.prototype.getViewModel = function() {
+    return this._vizManager.getViewModel();
+};
+
+SimilarityVizManager.prototype.render = function() {
+    let midi = this.getViewModel().getMidi();
+    let horiTrack = midi.tracks[0];
+    let vertTrack = midi.tracks[0]
+    this._matrix.render(horiTrack, vertTrack);
+};
+
+// ==================================================
+/**
+ * Handles the rendering of the music player
+ */
+function MusicPlayerManager(elem, sheetMusicPlayerManager) {
+    this._elem = elem;
+    this._musicManager = sheetMusicPlayerManager;
+}
+
+MusicPlayerManager.prototype.getElem = function() {
+    return this._elem;
+};
+
+MusicPlayerManager.prototype.render = function() {
 
 };
 
 // ==================================================
-
 /**
  * Handles the rendering of the similarity matrix
  */
-function SimilarityMatrixManager(vizManager) {
-    this._vizManager = vizManager;
+function SimilarityMatrixManager(elem, simVizManager) {
+    this._elem = elem;
+    this._simVizManager = simVizManager;
 }
+
+SimilarityMatrixManager.prototype.getElem = function() {
+    return this._elem;
+};
 
 SimilarityMatrixManager.prototype._trackToMelody = function(track) {
     let melody = [track.notes[0]];
@@ -44,16 +153,17 @@ SimilarityMatrixManager.prototype._trackToMelody = function(track) {
 };
 
 SimilarityMatrixManager.prototype._melodyToMeasures = function(melody) {
-    let midi = this._vizManager.getViewModel().getMidi();
+    let midi = this._simVizManager.getViewModel().getMidi();
     let ppq = midi.header.ppq;
 
+    let defaultTimeSig = [4, 4];
     let timeSigs = midi.header.timeSignatures.map(function(timeSig) {
-        return [timeSig.measures, timeSig.timeSignature ? timeSig.timeSignature : [4, 4]];
+        return [timeSig.measures, timeSig.timeSignature ? timeSig.timeSignature : defaultTimeSig];
     });
     if (timeSigs.length === 0) {
-        timeSigs.push([0, [4, 4]]);
+        timeSigs.push([0, defaultTimeSig]);
     }
-    timeSigs.push([-1, [4, 4]]);
+    timeSigs.push([-1, defaultTimeSig]);
 
     let measureNotes = [];
     let currNoteInd = 0;
@@ -126,8 +236,8 @@ SimilarityMatrixManager.prototype._similarity = function(measure1, measure2) {
 //     // return unigrams;
 // };
 
-SimilarityMatrixManager.prototype.render = function(container, horiTrack, vertTrack) {
-    let canvas = container.querySelector('.sim-matrix');
+SimilarityMatrixManager.prototype.render = function(horiTrack, vertTrack) {
+    let canvas = this._elem;
     canvas.width = 800;
     canvas.height = 800;
     let ctx = canvas.getContext('2d');
@@ -144,7 +254,9 @@ SimilarityMatrixManager.prototype.render = function(container, horiTrack, vertTr
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
             let score = this._similarity(vertMeasures[i], horiMeasures[j]);
+            // ctx.fillStyle = 'rgba(0, 0, 0, ' + ((score < 0.5) + 0) + ')';
             ctx.fillStyle = 'rgba(0, 0, 0, ' + ((score < 0.5) + 0) + ')';
+            // ctx.fillStyle = 'rgba(0, 0, 0, ' + Math.pow((1-score), 0.5) + ')';
             ctx.fillRect(j * sqLen, i * sqLen, sqLen, sqLen);
         }
     }
@@ -153,73 +265,95 @@ SimilarityMatrixManager.prototype.render = function(container, horiTrack, vertTr
 // ==================================================
 
 /**
- * Handles the rendering of the visualization.
+ * Handles the rendering of the sheet music player
  */
-function VisualizationManager(viewModel) {
-    this._viewModel = viewModel;
-    this._matrix = new SimilarityMatrixManager(this);
+function SheetMusicPlayerManager(elem, vizManager) {
+    this._elem = elem;
+    this._vizManager = vizManager;
+
+    let sheetMusicContainer = this._elem.querySelector('.music-sheet');
+    this._sheetMusicManager = new SheetMusicManager(sheetMusicContainer, this);
 }
 
-VisualizationManager.prototype.getViewModel = function() {
-    return this._viewModel;
+SheetMusicPlayerManager.prototype.getElem = function() {
+    return this._elem;
 };
 
-VisualizationManager.prototype.render = function(container) {
-    let midi = this._viewModel.getMidi();
-    let track1 = midi.tracks[0];
-    let track2 = midi.tracks[0]
-
-    let matrixContainer = container.querySelector('.sim-matrix-container');
-    this._matrix.render(matrixContainer, track1, track2);
+SheetMusicPlayerManager.prototype.getViewModel = function() {
+    return this._vizManager.getViewModel();
 };
 
+SheetMusicPlayerManager.prototype.getSheetMusicManager = function() {
+    return this._sheetMusicManager;
+};
+
+SheetMusicPlayerManager.prototype.render = function() {
+    this._sheetMusicManager.render();
+};
 
 // ==================================================
 
 /**
- * Application Model
+ * Handles the rendering of the sheet music
  */
-function ViewModel() {
-    this._midiInputManager = new MidiInputManager(this);
-    this._vizManager = new VisualizationManager(this);
+function SheetMusicManager(elem, sheetMusicPlayerManager) {
+    this._elem = elem;
+    this._musicManager = sheetMusicPlayerManager;
 }
 
-
-ViewModel.prototype.setMidi = function(midi) {
-    this._midi = midi;
+SheetMusicManager.prototype.getElem = function() {
+    return this._elem;
 };
 
-ViewModel.prototype.getMidi = function() {
-    return this._midi;
-};
-
-
-ViewModel.prototype.render = function(container) {
-    if (this._midi == null) {
-        return;
-    }
-
-    let vizContainer = container.querySelector('.viz-container');
-    this._vizManager.render(vizContainer);
+SheetMusicManager.prototype.render = function() {
+    let viewModel = this._musicManager.getViewModel();
+    let osmd = viewModel.getMusicDisplay();
+    // osmd.zoom = 0.75;
+    osmd.render();
 };
 
 
+/**
+ * Handles the rendering of the music selection region.
+ */
+function MidiInputManager(viewModel) {
+    this._viewModel = viewModel;
+}
+
+MidiInputManager.prototype.render = function() {
+
+};
 
 
-// ========== Main ==========
+// ====================== Main ========================
 
-async function main() {
-    // Initial load midi
-    let midi = await Midi.fromUrl(example_midis[0]);
-    console.log(midi)
-    viewModel.setMidi(midi);
+function main() {
+    let initialRender = function() {
+        let viewModel = new ViewModel(document.querySelector('.container'));
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            viewModel.render(document.querySelector('.container'));
+        let midiPromise = Midi.fromUrl(example_music[0] + '.mid');
+
+        let musicSheetContainer = viewModel.getVisualizationManager()
+                                        .getSheetMusicPlayerManager()
+                                        .getSheetMusicManager()
+                                        .getElem();
+        let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(musicSheetContainer,
+            {backend: 'svg', drawingParameters: 'compact', drawPartNames: true});
+        let musicPromise = osmd.load(example_music[0] + '.musicxml');
+
+        return Promise.all([midiPromise, musicPromise]).then(function(values) {
+            let midi = values[0];
+            console.log(midi);
+            viewModel.setMidi(midi);
+            viewModel.setMusicDisplay(osmd);
+            viewModel.render();
         });
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialRender);
     } else {
-        viewModel.render(document.querySelector('.container'));
+        initialRender();
     }
 }
 
