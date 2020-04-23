@@ -50,6 +50,18 @@ ViewModel.prototype.render = function() {
 
 // ==================================================
 /**
+ * Handles the rendering of the music selection region.
+ */
+function MidiInputManager(viewModel) {
+    this._viewModel = viewModel;
+}
+
+MidiInputManager.prototype.render = function() {
+
+};
+
+// ==================================================
+/**
  * Handles the rendering of the visualization.
  */
 function VisualizationManager(elem, viewModel) {
@@ -90,6 +102,11 @@ function SimilarityVizManager(elem, vizManager) {
 
     let matrixContainer = this._elem.querySelector('.sim-matrix');
     this._matrix = new SimilarityMatrixManager(matrixContainer, this);
+
+    let horiTrackPickerContainer = this._elem.querySelector('.sim-h-track-container');
+    this._horiTrackPicker = new SimilarityMatrixTrackPicker(horiTrackPickerContainer, this);
+    let vertTrackPickerContainer = this._elem.querySelector('.sim-v-track-container');
+    this._vertTrackPicker = new SimilarityMatrixTrackPicker(vertTrackPickerContainer, this);
 }
 
 SimilarityVizManager.prototype.getElem = function() {
@@ -100,29 +117,85 @@ SimilarityVizManager.prototype.getViewModel = function() {
     return this._vizManager.getViewModel();
 };
 
-SimilarityVizManager.prototype.render = function() {
-    let midi = this.getViewModel().getMidi();
-    let horiTrack = midi.tracks[0];
-    let vertTrack = midi.tracks[0]
-    this._matrix.render(horiTrack, vertTrack);
+SimilarityVizManager.prototype.getHoriTrackPicker = function() {
+    return this._horiTrackPicker;
 };
+
+SimilarityVizManager.prototype.getVertTrackPicker = function() {
+    return this._vertTrackPicker;
+};
+
+SimilarityVizManager.prototype.getMatrix = function() {
+    return this._matrix;
+};
+
+SimilarityVizManager.prototype.render = function() {
+    this._horiTrackPicker.render()
+    this._vertTrackPicker.render();
+    this._matrix.render();
+};
+
+
 
 // ==================================================
 /**
- * Handles the rendering of the music player
+ * Handles the rendering of a track picker
  */
-function MusicPlayerManager(elem, sheetMusicPlayerManager) {
+function SimilarityMatrixTrackPicker(elem, simVizManager) {
     this._elem = elem;
-    this._musicManager = sheetMusicPlayerManager;
+    this._simVizManager = simVizManager;
+    this._btnTrackMap = null;
+    this._selectedBtn = null;
 }
 
-MusicPlayerManager.prototype.getElem = function() {
+SimilarityMatrixTrackPicker.prototype.getElem = function() {
     return this._elem;
 };
 
-MusicPlayerManager.prototype.render = function() {
-
+SimilarityMatrixTrackPicker.prototype.getViewModel = function() {
+    return this._simVizManager.getViewModel();
 };
+
+SimilarityMatrixTrackPicker.prototype.getSelectedTrack = function() {
+    return this._btnTrackMap.get(this._selectedBtn);
+};
+
+SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
+    let self = this;
+    let btn = document.createElement('button');
+    btn.innerHTML = track.instrument.name;
+
+    btn.addEventListener('click', function(event) {
+        self._selectedBtn.disabled = false;
+        self._selectedBtn = event.target;
+        event.target.disabled = true;
+
+        self._simVizManager.getMatrix().render();
+    });
+
+    return btn;
+};
+
+SimilarityMatrixTrackPicker.prototype.render = function() {
+    let self = this;
+
+    this._btnTrackMap = new Map();
+    let midi = this.getViewModel().getMidi();
+
+    midi.tracks.forEach(function(track, i) {
+        let btn = self._createTrackBtn(track);
+
+        if (i == 0) {
+            self._selectedBtn = btn;
+            btn.disabled = true;
+        }
+
+        self._elem.appendChild(btn);
+        self._btnTrackMap.set(btn, track);
+    });
+};
+
+
 
 // ==================================================
 /**
@@ -236,10 +309,15 @@ SimilarityMatrixManager.prototype._similarity = function(measure1, measure2) {
 //     // return unigrams;
 // };
 
-SimilarityMatrixManager.prototype.render = function(horiTrack, vertTrack) {
+SimilarityMatrixManager.prototype.render = function() {
+    let horiTrackPicker = this._simVizManager.getHoriTrackPicker()
+    let vertTrackPicker = this._simVizManager.getVertTrackPicker()
+    let horiTrack = horiTrackPicker.getSelectedTrack();
+    let vertTrack = vertTrackPicker.getSelectedTrack();
+
     let canvas = this._elem;
-    canvas.width = 800;
-    canvas.height = 800;
+    canvas.width = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth;
+    canvas.height = canvas.width;
     let ctx = canvas.getContext('2d');
 
     // Clear existing matrix
@@ -292,7 +370,23 @@ SheetMusicPlayerManager.prototype.render = function() {
 };
 
 // ==================================================
+/**
+ * Handles the rendering of the music player
+ */
+function MusicPlayerManager(elem, sheetMusicPlayerManager) {
+    this._elem = elem;
+    this._musicManager = sheetMusicPlayerManager;
+}
 
+MusicPlayerManager.prototype.getElem = function() {
+    return this._elem;
+};
+
+MusicPlayerManager.prototype.render = function() {
+
+};
+
+// ==================================================
 /**
  * Handles the rendering of the sheet music
  */
@@ -310,18 +404,6 @@ SheetMusicManager.prototype.render = function() {
     let osmd = viewModel.getMusicDisplay();
     // osmd.zoom = 0.75;
     osmd.render();
-};
-
-
-/**
- * Handles the rendering of the music selection region.
- */
-function MidiInputManager(viewModel) {
-    this._viewModel = viewModel;
-}
-
-MidiInputManager.prototype.render = function() {
-
 };
 
 
