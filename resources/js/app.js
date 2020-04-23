@@ -315,6 +315,9 @@ SimilarityMatrixManager.prototype.render = function() {
     let horiTrack = horiTrackPicker.getSelectedTrack();
     let vertTrack = vertTrackPicker.getSelectedTrack();
 
+    // Center horizontal track picker
+    horiTrackPicker.getElem().style.marginLeft = vertTrackPicker.getElem().clientWidth + 'px';
+
     let canvas = this._elem;
     canvas.width = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth;
     canvas.height = canvas.width;
