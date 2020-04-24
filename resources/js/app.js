@@ -49,6 +49,37 @@ ViewModel.prototype.getVisualizationManager = function() {
     return this._vizManager;
 };
 
+ViewModel.prototype.loadMusic = function(fn) {
+    let midiPromise = Midi.fromUrl(data_root + fn + '.mid');
+
+    let musicSheetContainer = this.getVisualizationManager()
+                                    .getSheetMusicPlayerManager()
+                                    .getSheetMusicManager()
+                                    .getElem();
+
+    if (this._osmd) {
+        this._osmd.clear();
+    }
+
+    // Canvas backend is faster, but at the time of writing, large music sheets
+    // are clipped. This may be because there's a browser limit on the canvas height.
+    // Use SVG backend instead.
+    let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(musicSheetContainer,
+        {backend: 'svg', drawingParameters: 'compact', drawPartNames: true});
+    let musicPromise = osmd.load(data_root + fn + '.musicxml');
+
+    return Promise.all([midiPromise, musicPromise]).then(function(values) {
+        let midi = values[0];
+
+        // Filter tracks without any notes
+        midi.tracks = midi.tracks.filter(function(track) {
+            return track.notes.length > 0;
+        });
+
+        return [midi, osmd];
+    });
+};
+
 ViewModel.prototype.render = function() {
     if (this._midi == null) {
         return;
@@ -67,7 +98,16 @@ function MidiInputManager(elem, viewModel) {
     this._viewModel = viewModel;
 }
 
+MidiInputManager.prototype.getElem = function() {
+    return this._elem;
+};
+
+MidiInputManager.prototype.getViewModel = function() {
+    return this._viewModel;
+};
+
 MidiInputManager.prototype.render = function() {
+    let self = this;
     let select = this._elem.querySelector('#music-select');
 
     example_music.forEach(function(fn) {
@@ -78,7 +118,15 @@ MidiInputManager.prototype.render = function() {
     });
 
     select.addEventListener('change', function(event) {
-        console.log(event.target.value);
+        let viewModel = self.getViewModel();
+        viewModel.loadMusic(event.target.value).then(function(values) {
+            let midi = values[0];
+            let osmd = values[1];
+
+            viewModel.setMidi(midi);
+            viewModel.setMusicDisplay(osmd);
+            viewModel.getVisualizationManager().render();
+        });
     });
 };
 
@@ -200,6 +248,9 @@ SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
 
 SimilarityMatrixTrackPicker.prototype.render = function() {
     let self = this;
+
+    // Clear any previously rendered stuff
+    this._elem.innerHTML = '';
 
     this._btnTrackMap = new Map();
     let midi = this.getViewModel().getMidi();
@@ -437,6 +488,9 @@ SheetMusicManager.prototype.getElem = function() {
 };
 
 SheetMusicManager.prototype.render = function() {
+    // Clear any previously rendered sheet music
+    this._elem.innerHTML = '';
+
     let viewModel = this._musicManager.getViewModel();
     let osmd = viewModel.getMusicDisplay();
     osmd.zoom = 0.7;
@@ -450,28 +504,10 @@ function main() {
     let initialRender = function() {
         let viewModel = new ViewModel(document.querySelector('.container'));
 
-        let midiPromise = Midi.fromUrl(data_root + example_music[0] + '.mid');
-
-        let musicSheetContainer = viewModel.getVisualizationManager()
-                                        .getSheetMusicPlayerManager()
-                                        .getSheetMusicManager()
-                                        .getElem();
-
-        // Canvas backend is faster, but at the time of writing, large music sheets
-        // are clipped. This may be because there's a browser limit on the canvas height.
-        // Use SVG backend instead.
-        let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(musicSheetContainer,
-            {backend: 'svg', drawingParameters: 'compact', drawPartNames: true});
-        let musicPromise = osmd.load(data_root + example_music[0] + '.musicxml');
-
-        return Promise.all([midiPromise, musicPromise]).then(function(values) {
+        viewModel.loadMusic(example_music[0]).then(function(values) {
             let midi = values[0];
-            console.log(midi);
+            let osmd = values[1];
 
-            // Filter tracks without any notes
-            midi.tracks = midi.tracks.filter(function(track) {
-                return track.notes.length > 0;
-            });
             viewModel.setMidi(midi);
             viewModel.setMusicDisplay(osmd);
             viewModel.render();

@@ -28,6 +28,19 @@ html,body{
     margin-left: 0.67em;
 }
 
+.music-select-container {
+    font-family: Helvetica, Arial, Sans-Serif;
+    font-weight: 700;
+}
+
+#music-select {
+    height: 2.5em;
+    font-family: Helvetica, Arial, Sans-Serif;
+    background-color: #3b3c36;
+    color: #fff;
+    font-size: 1em;
+}
+
 /* Partly taken from stock 'view on GitHub' banner */
 #forkme_banner {
     pointer-events: all;
