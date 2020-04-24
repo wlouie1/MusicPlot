@@ -1,7 +1,14 @@
 'use strict';
 
+const data_root = 'resources/data/'
 const example_music = [
-    'resources/data/mozart_eine_kleine'
+    'beethoven_fur_elise',
+    'bach_846',
+    'bwv582',
+    'mozart_eine_kleine',
+    'mary_had_a_little_lamb_VLN',
+    'beethoven_sym5_mvt1_ORCH',
+    'Lady_Gaga_-_poker_face'
 ];
 
 // ==================================================
@@ -10,7 +17,9 @@ const example_music = [
  */
 function ViewModel(elem) {
     this._elem = elem;
-    this._midiInputManager = new MidiInputManager(this);
+
+    let inputContainer = this._elem.querySelector('.music-select-container');
+    this._midiInputManager = new MidiInputManager(inputContainer, this);
 
     let vizContainer = this._elem.querySelector('.viz-container');
     this._vizManager = new VisualizationManager(vizContainer, this);
@@ -45,6 +54,7 @@ ViewModel.prototype.render = function() {
         return;
     }
 
+    this._midiInputManager.render();
     this._vizManager.render();
 };
 
@@ -52,12 +62,24 @@ ViewModel.prototype.render = function() {
 /**
  * Handles the rendering of the music selection region.
  */
-function MidiInputManager(viewModel) {
+function MidiInputManager(elem, viewModel) {
+    this._elem = elem;
     this._viewModel = viewModel;
 }
 
 MidiInputManager.prototype.render = function() {
+    let select = this._elem.querySelector('#music-select');
 
+    example_music.forEach(function(fn) {
+        let option = document.createElement('option');
+        option.value = fn;
+        option.text = fn;
+        select.appendChild(option);
+    });
+
+    select.addEventListener('change', function(event) {
+        console.log(event.target.value);
+    });
 };
 
 // ==================================================
@@ -163,7 +185,7 @@ SimilarityMatrixTrackPicker.prototype.getSelectedTrack = function() {
 SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
     let self = this;
     let btn = document.createElement('button');
-    btn.innerHTML = track.instrument.name;
+    btn.innerHTML = track.name.length > 0 ? track.name : track.instrument.name;
 
     btn.addEventListener('click', function(event) {
         self._selectedBtn.disabled = false;
@@ -285,12 +307,17 @@ SimilarityMatrixManager.prototype._similarity = function(measure1, measure2) {
         return JSON.stringify(u);
     }));
 
+    if (unigrams1.size === 0 && unigrams2.size === 0) {
+        return 1;
+    }
+
     let intersection = new Set();
     unigrams1.forEach(function(u) {
         if (unigrams2.has(u)) {
             intersection.add(u);
         }
     });
+
     return 2 * intersection.size / (unigrams1.size + unigrams2.size);
 };
 
@@ -316,15 +343,19 @@ SimilarityMatrixManager.prototype.render = function() {
     let vertTrack = vertTrackPicker.getSelectedTrack();
 
     // Center horizontal track picker
-    horiTrackPicker.getElem().style.marginLeft = vertTrackPicker.getElem().clientWidth + 'px';
+    horiTrackPicker.getElem().style.paddingLeft = vertTrackPicker.getElem().clientWidth + 'px';
 
     let canvas = this._elem;
-    canvas.width = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth;
+    let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth - 50;
+    let availHeight = this._simVizManager.getViewModel().getVisualizationManager().getElem().clientHeight - horiTrackPicker.getElem().clientHeight;
+    canvas.width = Math.min(availWidth, availHeight);
     canvas.height = canvas.width;
     let ctx = canvas.getContext('2d');
 
     // Clear existing matrix
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'black';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     let horiMeasures = this._melodyToMeasures(this._trackToMelody(horiTrack));
     let vertMeasures = this._melodyToMeasures(this._trackToMelody(vertTrack));
@@ -336,9 +367,12 @@ SimilarityMatrixManager.prototype.render = function() {
         for (let j = 0; j < N; j++) {
             let score = this._similarity(vertMeasures[i], horiMeasures[j]);
             // ctx.fillStyle = 'rgba(0, 0, 0, ' + ((score < 0.5) + 0) + ')';
-            ctx.fillStyle = 'rgba(0, 0, 0, ' + ((score < 0.5) + 0) + ')';
+            // ctx.fillStyle = 'rgba(0, 0, 0, ' + ((score < 0.5) + 0) + ')';
             // ctx.fillStyle = 'rgba(0, 0, 0, ' + Math.pow((1-score), 0.5) + ')';
-            ctx.fillRect(j * sqLen, i * sqLen, sqLen, sqLen);
+            if (score >= 0.5) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(j * sqLen, i * sqLen, sqLen, sqLen);
+            }   
         }
     }
 };
@@ -405,7 +439,7 @@ SheetMusicManager.prototype.getElem = function() {
 SheetMusicManager.prototype.render = function() {
     let viewModel = this._musicManager.getViewModel();
     let osmd = viewModel.getMusicDisplay();
-    // osmd.zoom = 0.75;
+    osmd.zoom = 0.7;
     osmd.render();
 };
 
@@ -416,19 +450,28 @@ function main() {
     let initialRender = function() {
         let viewModel = new ViewModel(document.querySelector('.container'));
 
-        let midiPromise = Midi.fromUrl(example_music[0] + '.mid');
+        let midiPromise = Midi.fromUrl(data_root + example_music[0] + '.mid');
 
         let musicSheetContainer = viewModel.getVisualizationManager()
                                         .getSheetMusicPlayerManager()
                                         .getSheetMusicManager()
                                         .getElem();
+
+        // Canvas backend is faster, but at the time of writing, large music sheets
+        // are clipped. This may be because there's a browser limit on the canvas height.
+        // Use SVG backend instead.
         let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(musicSheetContainer,
             {backend: 'svg', drawingParameters: 'compact', drawPartNames: true});
-        let musicPromise = osmd.load(example_music[0] + '.musicxml');
+        let musicPromise = osmd.load(data_root + example_music[0] + '.musicxml');
 
         return Promise.all([midiPromise, musicPromise]).then(function(values) {
             let midi = values[0];
             console.log(midi);
+
+            // Filter tracks without any notes
+            midi.tracks = midi.tracks.filter(function(track) {
+                return track.notes.length > 0;
+            });
             viewModel.setMidi(midi);
             viewModel.setMusicDisplay(osmd);
             viewModel.render();

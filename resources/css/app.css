@@ -1,6 +1,7 @@
 html,body{
     margin: 0;
     padding: 0;
+    font-family: Helvetica, Arial, Sans-Serif;
 }
 
 .container {
@@ -12,12 +13,43 @@ html,body{
 }
 
 .header-container {
+    /* position: relative; */
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex: 0 0 auto;
     width: 100%;
-    background-color: red;
+    background-color: #1b1b1b;
+    color: #fff;
+    /* background-color: #1592CA; */
+}
+
+.header-title {
+    margin-left: 0.67em;
+}
+
+/* Partly taken from stock 'view on GitHub' banner */
+#forkme_banner {
+    pointer-events: all;
+    display: block;
+    padding: 10px 50px 10px 10px;
+    color: #fff;
+    background: url('../images/blacktocat.png') #1592CA no-repeat 95% 50%;
+    font-weight: 700;
+    box-shadow: 0 0 10px rgba(0,0,0,.5);
+    border-bottom-left-radius: 2px;
+    border-bottom-right-radius: 2px;
+    margin-right: 1em;
+}
+
+.music-select-container {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    pointer-events: none;
+    /* height: 100%; */
 }
 
 .viz-container {
@@ -33,14 +65,25 @@ html,body{
     flex-direction: column;
     flex-wrap: nowrap;
     height: 100%;
-    flex: 1 1 50%
-    /* width: 50%; */
+    /* flex: 1 1 50% */
+    width: 50%;
+    background-color: #F3F3F3;
+}
+
+.sim-matrix {
+    border: 1px solid black;
 }
 
 .sim-h-track-container {
     display: flex;
-    /* margin-left: 100px; */
+    flex-wrap: wrap;
+    /* padding-left: 100px; */
     justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-right: 50px;
 }
 
 .sim-v-track-matrix-container {
@@ -51,12 +94,17 @@ html,body{
 
 .sim-v-track-container {
     display: flex;
+    flex-wrap: wrap;
     flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
 }
 
 .music-container {
     flex: 1 1 50%;
-    background-color: yellow;
+    background-color: white;
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
