@@ -1,6 +1,29 @@
 'use strict';
 
-const data_root = 'resources/data/'
+const image_root = 'resources/images/';
+// indexed by midi instrument number
+const instrument_image = [
+    'musical-note', // fallback
+    'piano','piano','piano','piano','piano','piano','piano','piano',
+    'xylophone','xylophone','xylophone','xylophone','xylophone','xylophone','xylophone','xylophone',
+    'organ','organ','organ','organ','organ','accordion','harmonica','accordion',
+    'acoustic-guitar','acoustic-guitar','electric-guitar','electric-guitar','electric-guitar','electric-guitar','electric-guitar','electric-guitar',
+    'electric-guitar','electric-guitar','electric-guitar','electric-guitar','electric-guitar','electric-guitar','electric-guitar','electric-guitar',
+    'violin','violin','violin','violin','violin','violin','violin','timpani',
+    'violin','violin','violin','violin','musical-note','musical-note','musical-note','violin',
+    'trumpet','trombone','tuba','trumpet','french-horn','trombone','trombone','trombone',
+    'saxophone','saxophone','saxophone','saxophone','clarinet','clarinet','bassoon','clarinet',
+    'flute','flute','flute','pan-flute','ocarina','flute','whistle','ocarina',
+    'synth','synth','synth','synth','synth','synth','synth','synth',
+    'synth','synth','synth','synth','synth','synth','synth','synth',
+    'synth','synth','synth','synth','synth','synth','synth','synth',
+    'banjo','banjo','banjo','kalimba','kalimba','bagpipe','violin','clarinet',
+    'drum-set','drum-set','drum-set','drum-set','drum-set','drum-set','drum-set','drum-set',
+    'musical-note','musical-note','musical-note','musical-note','musical-note','musical-note','musical-note','musical-note',
+    'musical-note' // fallback
+];
+
+const data_root = 'resources/data/';
 const example_music = [
     'beethoven_fur_elise',
     'bach_846',
@@ -75,6 +98,8 @@ ViewModel.prototype.loadMusic = function(fn) {
         midi.tracks = midi.tracks.filter(function(track) {
             return track.notes.length > 0;
         });
+
+        console.log(midi)
 
         return [midi, osmd];
     });
@@ -233,12 +258,20 @@ SimilarityMatrixTrackPicker.prototype.getSelectedTrack = function() {
 SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
     let self = this;
     let btn = document.createElement('button');
-    btn.innerHTML = track.name.length > 0 ? track.name : track.instrument.name;
+    btn.classList.add('track-btn');
+    let span = document.createElement('span');
+    let instrument = instrument_image[Math.min(Math.max(0, track.instrument.number + 1), instrument_image.length - 1)];
+    span.style.backgroundImage = "url('" + image_root + instrument + '.svg' + "')";
+
+    btn.appendChild(span);
 
     btn.addEventListener('click', function(event) {
         self._selectedBtn.disabled = false;
-        self._selectedBtn = event.target;
-        event.target.disabled = true;
+        self._selectedBtn = event.currentTarget;
+        self._selectedBtn.disabled = true;
+
+        let selectedTrackContainer = self._elem.querySelector('.sim-track-selected');
+        selectedTrackContainer.innerHTML = self._selectedBtn._partName;
 
         self._simVizManager.getMatrix().render();
     });
@@ -249,23 +282,37 @@ SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
 SimilarityMatrixTrackPicker.prototype.render = function() {
     let self = this;
 
+    let trackBtnsContainer = this._elem.querySelector('.sim-tracks');
+    let selectedTrackContainer = this._elem.querySelector('.sim-track-selected')
+
     // Clear any previously rendered stuff
-    this._elem.innerHTML = '';
+    trackBtnsContainer.innerHTML = '';
+    selectedTrackContainer.innerHTML = '';
 
     this._btnTrackMap = new Map();
     let midi = this.getViewModel().getMidi();
+    let osmd = this.getViewModel().getMusicDisplay();
 
     midi.tracks.forEach(function(track, i) {
-        let btn = self._createTrackBtn(track);
+        let part;
+        try {
+            part = osmd.Sheet.Parts[i].nameLabel.text;
+        } catch(err) {
+            part = null;
+        } finally {
+            let btn = self._createTrackBtn(track);
+            btn._partName = part ? part : (track.name.length > 0 ? track.name : track.instrument.name);
 
-        if (i == 0) {
-            self._selectedBtn = btn;
-            btn.disabled = true;
+            if (i == 0) {
+                self._selectedBtn = btn;
+                selectedTrackContainer.innerHTML = self._selectedBtn._partName;
+                btn.disabled = true;
+            }
+
+            trackBtnsContainer.appendChild(btn);
+            self._btnTrackMap.set(btn, track);
         }
-
-        self._elem.appendChild(btn);
-        self._btnTrackMap.set(btn, track);
-    });
+    });  
 };
 
 
@@ -398,7 +445,7 @@ SimilarityMatrixManager.prototype.render = function() {
 
     let canvas = this._elem;
     let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth - 50;
-    let availHeight = this._simVizManager.getViewModel().getVisualizationManager().getElem().clientHeight - horiTrackPicker.getElem().clientHeight;
+    let availHeight = this._simVizManager.getViewModel().getVisualizationManager().getElem().clientHeight - horiTrackPicker.getElem().clientHeight - 50;
     canvas.width = Math.min(availWidth, availHeight);
     canvas.height = canvas.width;
     let ctx = canvas.getContext('2d');
