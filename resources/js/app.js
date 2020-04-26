@@ -88,7 +88,7 @@ ViewModel.prototype.loadMusic = function(fn) {
     // are clipped. This may be because there's a browser limit on the canvas height.
     // Use SVG backend instead.
     let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(musicSheetContainer,
-        {backend: 'svg', drawingParameters: 'compact', drawPartNames: true});
+        {backend: 'svg', drawingParameters: 'compact', drawPartNames: true, disableCursor: false});
     let musicPromise = osmd.load(data_root + fn + '.musicxml');
 
     return Promise.all([midiPromise, musicPromise]).then(function(values) {
@@ -534,6 +534,34 @@ SheetMusicManager.prototype.getElem = function() {
     return this._elem;
 };
 
+SheetMusicManager.prototype.highlightTrackMeasure = function(bboxElem, trackIndex, measureIndex) {
+    let osmd = this._musicManager.getViewModel().getMusicDisplay();
+    let sourceMeasure = osmd.Sheet.SourceMeasures[measureIndex];
+    let verticalMeasures = sourceMeasure.VerticalMeasureList;
+    
+    let measureStaveMap = new Map();
+    verticalMeasures.forEach(function(vm) {
+        measureStaveMap.set(vm.ParentStaff, vm);
+    });
+
+    let trackMeasures = osmd.Sheet.Parts.map(function(p) {
+        return measureStaveMap.get(p.staves[0]);
+    })
+
+    let targetMeasureStave = trackMeasures[trackIndex].stave;
+
+    let x = targetMeasureStave.x * osmd.zoom;
+    let y = targetMeasureStave.y * osmd.zoom;
+    let height = targetMeasureStave.height * osmd.zoom;
+    let width = targetMeasureStave.width * osmd.zoom;
+
+    bboxElem.classList.remove('hidden');
+    bboxElem.style.top = y + 'px';
+    bboxElem.style.left = x + 'px';
+    bboxElem.style.width = width + 'px';
+    bboxElem.style.height = height + 'px';
+};
+
 SheetMusicManager.prototype.render = function() {
     // Clear any previously rendered sheet music
     this._elem.innerHTML = '';
@@ -542,6 +570,20 @@ SheetMusicManager.prototype.render = function() {
     let osmd = viewModel.getMusicDisplay();
     osmd.zoom = 0.7;
     osmd.render();
+    osmd.cursor.show();
+
+    // Add track measure bounding boxes
+    this._trackbbox1 = document.createElement('div');
+    this._trackbbox1.classList.add('music-track-bbox', 'music-track1-bbox', 'hidden');
+    this._trackbbox2 = document.createElement('div');
+    this._trackbbox2.classList.add('music-track-bbox', 'music-track2-bbox', 'hidden');
+
+    let drawParent = osmd.cursor.cursorElement.parentElement;
+    drawParent.appendChild(this._trackbbox1);
+    drawParent.appendChild(this._trackbbox2);
+
+    // this.highlightTrackMeasure(this._trackbbox1, 0, 1);
+    // this.highlightTrackMeasure(this._trackbbox2, 0, 7);
 };
 
 

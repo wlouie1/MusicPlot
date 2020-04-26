@@ -195,3 +195,20 @@ html,body{
 .music-sheet {
     overflow-y: auto;
 }
+
+.music-track-bbox {
+    position: absolute;
+    z-index: -2;
+}
+
+.hidden {
+    display: none;
+}
+
+.music-track1-bbox {
+    background-color: green;
+}
+
+.music-track2-bbox {
+    background-color: red;
+}
