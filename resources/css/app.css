@@ -95,16 +95,23 @@ html,body{
     font-size: 0;
 }
 
-.track-btn span:hover {
-    filter: invert(43%) sepia(97%) saturate(2181%) hue-rotate(171deg) brightness(93%) contrast(84%);
+.sim-h-tracks .track-btn span:hover {
+    filter: invert(75%) sepia(57%) saturate(274%) hue-rotate(148deg) brightness(83%) contrast(88%);
 }
 
-.track-btn:disabled {
-    background-color: #14506A;
+.sim-v-tracks .track-btn span:hover {
+    filter: invert(67%) sepia(90%) saturate(3184%) hue-rotate(359deg) brightness(100%) contrast(105%);
 }
 
-.track-btn:disabled span {
-    /* filter: invert(71%) sepia(16%) saturate(1542%) hue-rotate(158deg) brightness(99%) contrast(91%); */
+.sim-h-tracks .track-btn:disabled {
+    background-color: #5b7c7d;
+}
+
+.sim-v-tracks .track-btn:disabled {
+    background-color: #fe5e31;
+}
+
+.sim-h-tracks .track-btn:disabled span,.sim-v-tracks .track-btn:disabled span {
     filter: invert(100%);
     cursor: default;
 }
@@ -144,6 +151,7 @@ html,body{
 
 .sim-h-track-selected {
     margin-top: 10px;
+    color: #5b7c7d;
 }
 
 .sim-v-track-matrix-container {
@@ -176,10 +184,11 @@ html,body{
     transform-origin: center;
     writing-mode: vertical-rl;
     margin-left: 10px;
+    color: #fe5e31;
 }
 
 .sim-track-selected {
-
+    font-weight: bold;
 }
 
 .music-container {
@@ -206,9 +215,9 @@ html,body{
 }
 
 .music-track1-bbox {
-    background-color: green;
+    background-color: #72b8c9;
 }
 
 .music-track2-bbox {
-    background-color: red;
+    background-color: #fe9001;
 }

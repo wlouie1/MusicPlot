@@ -252,7 +252,11 @@ SimilarityMatrixTrackPicker.prototype.getViewModel = function() {
 };
 
 SimilarityMatrixTrackPicker.prototype.getSelectedTrack = function() {
-    return this._btnTrackMap.get(this._selectedBtn);
+    return this._btnTrackMap.get(this._selectedBtn)[0];
+};
+
+SimilarityMatrixTrackPicker.prototype.getSelectedTrackInd = function() {
+    return this._btnTrackMap.get(this._selectedBtn)[1];
 };
 
 SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
@@ -310,7 +314,7 @@ SimilarityMatrixTrackPicker.prototype.render = function() {
             }
 
             trackBtnsContainer.appendChild(btn);
-            self._btnTrackMap.set(btn, track);
+            self._btnTrackMap.set(btn, [track, i]);
         }
     });  
 };
@@ -324,6 +328,8 @@ SimilarityMatrixTrackPicker.prototype.render = function() {
 function SimilarityMatrixManager(elem, simVizManager) {
     this._elem = elem;
     this._simVizManager = simVizManager;
+
+    this._elem.addEventListener('mousemove', this.handleMouseHover.bind(this));
 }
 
 SimilarityMatrixManager.prototype.getElem = function() {
@@ -434,9 +440,78 @@ SimilarityMatrixManager.prototype._similarity = function(measure1, measure2) {
 //     // return unigrams;
 // };
 
+SimilarityMatrixManager.prototype.getColor = function(score) {
+    return score < 0.5 ? 'black' : 'white';
+};
+
+SimilarityMatrixManager.prototype.handleMouseHover = function(event) {
+    let canvas = this._elem;
+
+    let N = this._gridSimVals.length;
+    let sqLen = canvas.width / N;
+    let ctx = canvas.getContext('2d');
+
+    let rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let sheetMusicManager = this._simVizManager.getViewModel()
+                            .getVisualizationManager()
+                            .getSheetMusicPlayerManager()
+                            .getSheetMusicManager();
+
+    let horiTrackPicker = this._simVizManager.getHoriTrackPicker();
+    let vertTrackPicker = this._simVizManager.getVertTrackPicker();
+    let horiTrackInd = horiTrackPicker.getSelectedTrackInd();
+    let vertTrackInd = vertTrackPicker.getSelectedTrackInd();
+
+    let ti;
+    let tj;
+    for (let i = 0; i < N; i++) {
+        for (let j = 0; j < N; j++) {
+            let score = this._gridSimVals[i][j];
+            ctx.beginPath();
+            ctx.rect(j * sqLen, i * sqLen, sqLen - 1, sqLen - 1);
+            if (ctx.isPointInPath(x, y)) {
+                ctx.fillStyle = this.getColor(score);
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'red';
+                ctx.strokeRect(j * sqLen, i * sqLen, sqLen - 1, sqLen - 1);
+                ctx.stroke();
+
+                ti = i;
+                tj = j;
+
+                sheetMusicManager.highlightHoriTrackMeasure(horiTrackInd, j);
+                sheetMusicManager.highlightVertTrackMeasure(vertTrackInd, i);
+            } else {
+                ctx.fillStyle = this.getColor(score);
+                ctx.fill();
+            }
+        }
+    }
+
+    ctx.shadowColor = '#72b8c9';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#72b8c9';
+    ctx.fillRect(tj * sqLen, tj * sqLen, sqLen - 1, sqLen - 1);
+
+    ctx.shadowColor = '#fe9001';
+    ctx.shadowBlur = 10;
+    ctx.fillStyle = '#fe9001';
+    ctx.fillRect(ti * sqLen, ti * sqLen, sqLen - 1, sqLen - 1);
+
+    ctx.shadowColor = "transparent";
+};
+
 SimilarityMatrixManager.prototype.render = function() {
-    let horiTrackPicker = this._simVizManager.getHoriTrackPicker()
-    let vertTrackPicker = this._simVizManager.getVertTrackPicker()
+    let horiTrackPicker = this._simVizManager.getHoriTrackPicker();
+    let vertTrackPicker = this._simVizManager.getVertTrackPicker();
     let horiTrack = horiTrackPicker.getSelectedTrack();
     let vertTrack = vertTrackPicker.getSelectedTrack();
 
@@ -451,8 +526,8 @@ SimilarityMatrixManager.prototype.render = function() {
     let ctx = canvas.getContext('2d');
 
     // Clear existing matrix
-    // ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'black';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     let horiMeasures = this._melodyToMeasures(this._trackToMelody(horiTrack));
@@ -461,17 +536,24 @@ SimilarityMatrixManager.prototype.render = function() {
     let N = Math.min(horiMeasures.length, vertMeasures.length);
     let sqLen = canvas.width / N;
 
+    this._gridSimVals = []
+
     for (let i = 0; i < N; i++) {
+        let row = [];
         for (let j = 0; j < N; j++) {
             let score = this._similarity(vertMeasures[i], horiMeasures[j]);
+            row.push(score)
             // ctx.fillStyle = 'rgba(0, 0, 0, ' + ((score < 0.5) + 0) + ')';
             // ctx.fillStyle = 'rgba(0, 0, 0, ' + ((score < 0.5) + 0) + ')';
             // ctx.fillStyle = 'rgba(0, 0, 0, ' + Math.pow((1-score), 0.5) + ')';
-            if (score >= 0.5) {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(j * sqLen, i * sqLen, sqLen, sqLen);
-            }   
+            // if (score >= 0.5) {
+            //     ctx.fillStyle = 'white';
+            //     ctx.fillRect(j * sqLen, i * sqLen, sqLen, sqLen);
+            // }   
+            ctx.fillStyle = this.getColor(score);
+            ctx.fillRect(j * sqLen, i * sqLen, sqLen - 1, sqLen - 1);
         }
+        this._gridSimVals.push(row);
     }
 };
 
@@ -534,7 +616,7 @@ SheetMusicManager.prototype.getElem = function() {
     return this._elem;
 };
 
-SheetMusicManager.prototype.highlightTrackMeasure = function(bboxElem, trackIndex, measureIndex) {
+SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, trackIndex, measureIndex) {
     let osmd = this._musicManager.getViewModel().getMusicDisplay();
     let sourceMeasure = osmd.Sheet.SourceMeasures[measureIndex];
     let verticalMeasures = sourceMeasure.VerticalMeasureList;
@@ -562,6 +644,14 @@ SheetMusicManager.prototype.highlightTrackMeasure = function(bboxElem, trackInde
     bboxElem.style.height = height + 'px';
 };
 
+SheetMusicManager.prototype.highlightHoriTrackMeasure = function(trackIndex, measureIndex) {
+    this._highlightTrackMeasure(this._trackbbox1, trackIndex, measureIndex);
+};
+
+SheetMusicManager.prototype.highlightVertTrackMeasure = function(trackIndex, measureIndex) {
+    this._highlightTrackMeasure(this._trackbbox2, trackIndex, measureIndex);
+};
+
 SheetMusicManager.prototype.render = function() {
     // Clear any previously rendered sheet music
     this._elem.innerHTML = '';
@@ -581,9 +671,6 @@ SheetMusicManager.prototype.render = function() {
     let drawParent = osmd.cursor.cursorElement.parentElement;
     drawParent.appendChild(this._trackbbox1);
     drawParent.appendChild(this._trackbbox2);
-
-    // this.highlightTrackMeasure(this._trackbbox1, 0, 1);
-    // this.highlightTrackMeasure(this._trackbbox2, 0, 7);
 };
 
 
