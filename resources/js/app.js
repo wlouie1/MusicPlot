@@ -271,7 +271,7 @@ SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
         self._selectedBtn.disabled = true;
 
         let selectedTrackContainer = self._elem.querySelector('.sim-track-selected');
-        selectedTrackContainer.innerHTML = self._selectedBtn._partName;
+        selectedTrackContainer.innerHTML = self._selectedBtn.title;
 
         self._simVizManager.getMatrix().render();
     });
@@ -301,11 +301,11 @@ SimilarityMatrixTrackPicker.prototype.render = function() {
             part = null;
         } finally {
             let btn = self._createTrackBtn(track);
-            btn._partName = part ? part : (track.name.length > 0 ? track.name : track.instrument.name);
+            btn.title = part ? part : (track.name.length > 0 ? track.name : track.instrument.name);
 
             if (i == 0) {
                 self._selectedBtn = btn;
-                selectedTrackContainer.innerHTML = self._selectedBtn._partName;
+                selectedTrackContainer.innerHTML = self._selectedBtn.title;
                 btn.disabled = true;
             }
 
