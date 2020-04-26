@@ -671,6 +671,8 @@ SheetMusicManager.prototype.render = function() {
     let drawParent = osmd.cursor.cursorElement.parentElement;
     drawParent.appendChild(this._trackbbox1);
     drawParent.appendChild(this._trackbbox2);
+
+    osmd.cursor.hide();
 };
 
 
