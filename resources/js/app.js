@@ -26,12 +26,12 @@ const instrument_image = [
 const data_root = 'resources/data/';
 const example_music = [
     'beethoven_fur_elise',
-    'bach_846',
-    'bwv582',
+    // 'bwv582',
     'mozart_eine_kleine',
-    'mary_had_a_little_lamb_VLN',
-    'beethoven_sym5_mvt1_ORCH',
-    'Lady_Gaga_-_poker_face'
+    // 'mary_had_a_little_lamb_VLN',
+    // 'beethoven_sym5_mvt1_ORCH',
+    // 'Lady_Gaga_-_poker_face'
+    'bach_846'
 ];
 
 // ==================================================
