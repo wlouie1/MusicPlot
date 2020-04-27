@@ -267,6 +267,10 @@ SimilarityMatrixTrackPicker.prototype.getSelectedTrackInd = function() {
     return this._btnTrackMap.get(this._selectedBtn)[1];
 };
 
+SimilarityMatrixTrackPicker.prototype.getSelectedTrackName = function() {
+    return this._selectedBtn.title;
+};
+
 SimilarityMatrixTrackPicker.prototype._createTrackBtn = function(track) {
     let self = this;
     let btn = document.createElement('button');
@@ -517,6 +521,37 @@ SimilarityMatrixManager.prototype.getColor = function(score) {
     return 'hsl(0, 0%, ' + (score * 100) + '%)';
 };
 
+SimilarityMatrixManager.prototype._renderTooltip = function(x, y, i, j) {
+    let tooltip = document.querySelector('.matrix-tooltip');
+    tooltip.classList.remove('invisible');
+    tooltip.classList.add('visible');
+
+    let horiTrackPicker = this._simVizManager.getHoriTrackPicker();
+    let vertTrackPicker = this._simVizManager.getVertTrackPicker();
+    let horiTrackName = horiTrackPicker.getSelectedTrackName();
+    let vertTrackName = vertTrackPicker.getSelectedTrackName();
+
+    let horiDetail = tooltip.querySelector('.matrix-tooltip-l1');
+    let vertDetail = tooltip.querySelector('.matrix-tooltip-l2');
+    let simScore = tooltip.querySelector('.matrix-tooltip-l3');
+
+    horiDetail.innerHTML = horiTrackName + ': Measure ' + (j + 1);
+    vertDetail.innerHTML = vertTrackName + ': Measure ' + (i + 1);
+    simScore.innerHTML = 'Similarity: ' + this._gridSimVals[i][j].toFixed(2);
+
+    let buffer = 10;
+    tooltip.style.top = (y - tooltip.clientHeight - buffer) + 'px';
+    tooltip.style.left = (x + buffer) + 'px';
+};
+
+SimilarityMatrixManager.prototype._hideTooltip = function() {
+    let tooltip = document.querySelector('.matrix-tooltip');
+    tooltip.classList.remove('visible');
+    tooltip.classList.add('invisible');
+    tooltip.style.top = '0px';
+    tooltip.style.left = '0px';
+};
+
 SimilarityMatrixManager.prototype.handleMouseHover = function(event) {
     let canvas = this._elem;
 
@@ -580,6 +615,9 @@ SimilarityMatrixManager.prototype.handleMouseHover = function(event) {
     ctx.fillRect(ti * sqLen, ti * sqLen, sqLen - 1, sqLen - 1);
 
     ctx.shadowColor = "transparent";
+
+
+    this._renderTooltip(event.clientX, event.clientY, ti, tj);
 };
 
 SimilarityMatrixManager.prototype.render = function() {

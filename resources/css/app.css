@@ -74,6 +74,7 @@ html,body{
 }
 
 .sim-matrix-container {
+    position: relative;
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
@@ -192,7 +193,7 @@ html,body{
 
 .sim-matrix-controls-container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     padding: 30px;
 }
@@ -232,6 +233,56 @@ html,body{
 .music-track2-bbox {
     background-color: #fe9001;
 }
+
+
+
+
+.tooltip {
+    color: #000;
+    text-align: center;
+    position: absolute;
+    z-index: 2000;
+    left: 0px;
+    pointer-events: none;
+}
+
+.tooltip.invisible {
+    left: -1000px;
+}
+
+.tooltip-content-container {
+    position: relative;
+}
+
+.matrix-tooltip .tooltip-content-container {
+    background-color: #444;
+    /* border: 3px solid #E5E5E5; */
+}
+
+.tooltip-content {
+    padding: 0.5em;
+}
+
+.matrix-tooltip-l1 {
+    color: #72b8c9;
+}
+
+.matrix-tooltip-l2 {
+    color: #fe9001;
+}
+
+.matrix-tooltip-l3 {
+    color: #E5E5E5;
+}
+
+.invisible {
+    opacity: 0;
+}
+
+.visible {
+    opacity: 1;
+}
+
 
 
 /* From https://www.w3schools.com/howto/howto_css_switch.asp */
