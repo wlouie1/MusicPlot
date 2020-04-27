@@ -10,6 +10,7 @@ Box i, j on the similarity matrix shows the similarity between measure i of the 
 
 ## Mockup of TODOs
 ![alt text](mockup_todos.png "Logo Title Text 1")
+I will be tweaking the demo, so this mockup may become stale over time.
 
 ## Desired Feedback
 - Anything confusing? What would make it less confusing?
