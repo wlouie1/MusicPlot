@@ -138,7 +138,6 @@ html,body{
     box-sizing: border-box;
     padding-top: 20px;
     padding-bottom: 20px;
-    padding-right: 50px;
 }
 
 .sim-h-tracks {
@@ -191,6 +190,18 @@ html,body{
     font-weight: bold;
 }
 
+.sim-matrix-controls-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 30px;
+}
+
+.sim-matrix-controls-disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
 .music-container {
     flex: 1 1 50%;
     background-color: white;
@@ -221,3 +232,109 @@ html,body{
 .music-track2-bbox {
     background-color: #fe9001;
 }
+
+
+/* From https://www.w3schools.com/howto/howto_css_switch.asp */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin-left: 20px;
+    margin-right: 20px;
+}
+
+.switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+
+/* Modified form of https://codepen.io/brandonmcconnell/pen/oJBVQW */
+html input[type="range"] {
+    outline: 0;
+    border: 1px solid #444;
+    width: 35%;
+    max-width: 100%;
+    -webkit-transition: box-shadow 0.2s ease-in-out;
+    transition: box-shadow 0.2s ease-in-out;
+  }
+  @media screen and (-webkit-min-device-pixel-ratio: 0) {
+    html input[type="range"] {
+      overflow: hidden;
+      height: 15px;
+      -webkit-appearance: none;
+      background-color: #ddd;
+    }
+    html input[type="range"]::-webkit-slider-runnable-track {
+      height: 15px;
+      -webkit-appearance: none;
+      color: #444;
+      background: #fff;
+    }
+    html input[type="range"]::-webkit-slider-thumb {
+      width: 20px;
+      -webkit-appearance: none;
+      height: 15px;
+      cursor: ew-resize;
+      background: #444;
+      box-shadow: -340px 0 0 320px #000, inset 0 0 0 0px #000;
+      position: relative;
+    }
+  }
+  html input[type="range"]::-moz-range-progress {
+    background-color: #000;
+  }
+  html input[type="range"]::-moz-range-track {
+    background-color: #fff;
+  }
+  html input[type="range"]::-ms-fill-lower {
+    background-color: #000;
+  }
+  html input[type="range"]::-ms-fill-upper {
+    background-color: #fff;
+  }

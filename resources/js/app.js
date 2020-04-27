@@ -202,6 +202,9 @@ function SimilarityVizManager(elem, vizManager) {
     this._horiTrackPicker = new SimilarityMatrixTrackPicker(horiTrackPickerContainer, this);
     let vertTrackPickerContainer = this._elem.querySelector('.sim-v-track-container');
     this._vertTrackPicker = new SimilarityMatrixTrackPicker(vertTrackPickerContainer, this);
+
+    let matrixControlsContainer = this._elem.querySelector('.sim-matrix-controls-container');
+    this._matrixControls = new SimilarityMatrixControlsManager(matrixControlsContainer, this);
 }
 
 SimilarityVizManager.prototype.getElem = function() {
@@ -224,9 +227,14 @@ SimilarityVizManager.prototype.getMatrix = function() {
     return this._matrix;
 };
 
+SimilarityVizManager.prototype.getControls = function() {
+    return this._matrixControls;
+};
+
 SimilarityVizManager.prototype.render = function() {
     this._horiTrackPicker.render()
     this._vertTrackPicker.render();
+    this._matrixControls.render();
     this._matrix.render();
 };
 
@@ -319,6 +327,61 @@ SimilarityMatrixTrackPicker.prototype.render = function() {
     });  
 };
 
+// ==================================================
+/**
+ * Handles the rendering of the matrix controls
+ */
+function SimilarityMatrixControlsManager(elem, simVizManager) {
+    this._elem = elem;
+    this._simVizManager = simVizManager;
+    this._isBinarizeOn = true;
+    this._binarizeThres = 0.5;
+
+    let self = this;
+    let binarizeToggle = this._elem.querySelector('.matrix-binarize-toggle');
+    let binarizeSlider = this._elem.querySelector('.matrix-binarize-thres-slider');
+    let binarizeThres = this._elem.querySelector('.matrix-binarize-thres-value');
+
+    binarizeToggle.addEventListener('change', function(event) {
+        self._isBinarizeOn = this.checked;
+        if (this.checked) {
+            binarizeSlider.disabled = false;
+            binarizeSlider.classList.remove('sim-matrix-controls-disabled');
+            binarizeThres.classList.remove('sim-matrix-controls-disabled');
+        } else {
+            binarizeSlider.disabled = true;
+            binarizeSlider.classList.add('sim-matrix-controls-disabled');
+            binarizeThres.classList.add('sim-matrix-controls-disabled');
+        }
+        self._simVizManager.getMatrix().render();
+    });
+
+    binarizeSlider.addEventListener('input', function(event) {
+        self._binarizeThres = this.value;
+        binarizeThres.innerHTML = parseFloat(this.value).toFixed(2);
+        self._simVizManager.getMatrix().render();
+    });
+}
+
+SimilarityMatrixControlsManager.prototype.getElem = function() {
+    return this._elem;
+};
+
+SimilarityMatrixControlsManager.prototype.getViewModel = function() {
+    return this._simVizManager.getViewModel();
+};
+
+SimilarityMatrixControlsManager.prototype.isBinarizeOn = function() {
+    return this._isBinarizeOn;
+};
+
+SimilarityMatrixControlsManager.prototype.getBinarizeThres = function() {
+    return this._binarizeThres;
+};
+
+SimilarityMatrixControlsManager.prototype.render = function() {
+
+};
 
 
 // ==================================================
@@ -334,6 +397,10 @@ function SimilarityMatrixManager(elem, simVizManager) {
 
 SimilarityMatrixManager.prototype.getElem = function() {
     return this._elem;
+};
+
+SimilarityMatrixManager.prototype.getViewModel = function() {
+    return this._simVizManager.getViewModel();
 };
 
 SimilarityMatrixManager.prototype._trackToMelody = function(track) {
@@ -352,7 +419,7 @@ SimilarityMatrixManager.prototype._trackToMelody = function(track) {
 };
 
 SimilarityMatrixManager.prototype._melodyToMeasures = function(melody) {
-    let midi = this._simVizManager.getViewModel().getMidi();
+    let midi = this.getViewModel().getMidi();
     let ppq = midi.header.ppq;
 
     let defaultTimeSig = [4, 4];
@@ -441,7 +508,13 @@ SimilarityMatrixManager.prototype._similarity = function(measure1, measure2) {
 // };
 
 SimilarityMatrixManager.prototype.getColor = function(score) {
-    return score < 0.5 ? 'black' : 'white';
+    let controls = this._simVizManager.getControls();
+    let isBinarizeOn = controls.isBinarizeOn();
+    if (isBinarizeOn) {
+        let binarizeThres = controls.getBinarizeThres();
+        return score > binarizeThres ? 'white' : 'black';
+    }
+    return 'hsl(0, 0%, ' + (score * 100) + '%)';
 };
 
 SimilarityMatrixManager.prototype.handleMouseHover = function(event) {
@@ -459,7 +532,7 @@ SimilarityMatrixManager.prototype.handleMouseHover = function(event) {
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    let sheetMusicManager = this._simVizManager.getViewModel()
+    let sheetMusicManager = this.getViewModel()
                             .getVisualizationManager()
                             .getSheetMusicPlayerManager()
                             .getSheetMusicManager();
@@ -516,13 +589,20 @@ SimilarityMatrixManager.prototype.render = function() {
     let vertTrack = vertTrackPicker.getSelectedTrack();
 
     // Center horizontal track picker
-    horiTrackPicker.getElem().style.paddingLeft = vertTrackPicker.getElem().clientWidth + 'px';
+    // For some reason need to call twice to force vertTrackPicker to render properly and give correct width
+    // horiTrackPicker.getElem().style.paddingLeft = vertTrackPicker.getElem().clientWidth + 'px';
+    // horiTrackPicker.getElem().style.paddingLeft = vertTrackPicker.getElem().clientWidth + 'px';
+
+    let controlsContainer = this._simVizManager.getControls();
 
     let canvas = this._elem;
-    let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth - 50;
-    let availHeight = this._simVizManager.getViewModel().getVisualizationManager().getElem().clientHeight - horiTrackPicker.getElem().clientHeight - 50;
+    let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth * 2;
+    let availHeight = this.getViewModel().getVisualizationManager().getElem().clientHeight
+                        - horiTrackPicker.getElem().clientHeight
+                        - controlsContainer.getElem().clientHeight;
     canvas.width = Math.min(availWidth, availHeight);
     canvas.height = canvas.width;
+
     let ctx = canvas.getContext('2d');
 
     // Clear existing matrix
