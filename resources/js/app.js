@@ -540,8 +540,27 @@ SimilarityMatrixManager.prototype._renderTooltip = function(x, y, i, j) {
     let horiTrackName = horiTrackPicker.getSelectedTrackName();
     let vertTrackName = vertTrackPicker.getSelectedTrackName();
 
-    let vertDetail = tooltip.querySelector('.matrix-tooltip-l1');
-    let horiDetail = tooltip.querySelector('.matrix-tooltip-l2');
+    let horiColor = '#72b8c9';
+    let vertColor = '#fe9001';
+
+    let lineTop = tooltip.querySelector('.matrix-tooltip-l1');
+    let lineBottom = tooltip.querySelector('.matrix-tooltip-l2');
+    let vertDetail;
+    let horiDetail;
+    if (j < i) {
+        horiDetail = lineTop;
+        vertDetail = lineBottom;
+    } else if (j > i) {
+        horiDetail = lineBottom;
+        vertDetail = lineTop;
+    } else {
+        horiDetail = lineTop;
+        vertDetail = lineBottom;
+    }
+
+    vertDetail.style.color = vertColor;
+    horiDetail.style.color = horiColor;
+
     let simScore = tooltip.querySelector('.matrix-tooltip-l3');
 
     horiDetail.innerHTML = horiTrackName + ': Measure ' + (j + 1);
