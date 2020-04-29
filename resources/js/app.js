@@ -670,6 +670,7 @@ SimilarityMatrixManager.prototype._preTargetCell = function(event) {
             ctx.fillStyle = this.getColor(score);
             ctx.rect(j * sqLen, i * sqLen, sqLen - 1, sqLen - 1);
             ctx.fill();
+            ctx.rect(j * sqLen, i * sqLen, sqLen, sqLen);
             if (ctx.isPointInPath(x, y)) {
                 ti = i;
                 tj = j;
@@ -724,6 +725,8 @@ SimilarityMatrixManager.prototype.handleMouseClick = function(event) {
 
     this._selectedI = payload.ti;
     this._selectedJ = payload.tj;
+    this._selectedX = event.clientX;
+    this._selectedY = event.clientY;
 
     this._renderActive(payload.ctx, payload.sqLen, payload.ti, payload.tj);
     this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
@@ -749,6 +752,7 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     let sqLen = canvas.width / N;
     let ctx = canvas.getContext('2d');
     this._renderActive(ctx, sqLen, this._selectedI, this._selectedJ);
+    this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
 };
 
 SimilarityMatrixManager.prototype.render = function() {
