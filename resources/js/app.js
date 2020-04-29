@@ -396,6 +396,7 @@ function SimilarityMatrixManager(elem, simVizManager) {
     this._elem = elem;
     this._simVizManager = simVizManager;
 
+    this._elem.addEventListener('click', this.handleMouseClick.bind(this));
     this._elem.addEventListener('mousemove', this.handleMouseOver.bind(this));
     this._elem.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
 }
@@ -406,6 +407,13 @@ SimilarityMatrixManager.prototype.getElem = function() {
 
 SimilarityMatrixManager.prototype.getViewModel = function() {
     return this._simVizManager.getViewModel();
+};
+
+SimilarityMatrixManager.prototype.getSheetMusicManager = function() {
+    return this.getViewModel()
+                .getVisualizationManager()
+                .getSheetMusicPlayerManager()
+                .getSheetMusicManager();
 };
 
 SimilarityMatrixManager.prototype._trackToMelody = function(track) {
@@ -532,15 +540,15 @@ SimilarityMatrixManager.prototype._renderTooltip = function(x, y, i, j) {
     let horiTrackName = horiTrackPicker.getSelectedTrackName();
     let vertTrackName = vertTrackPicker.getSelectedTrackName();
 
-    let horiDetail = tooltip.querySelector('.matrix-tooltip-l1');
-    let vertDetail = tooltip.querySelector('.matrix-tooltip-l2');
+    let vertDetail = tooltip.querySelector('.matrix-tooltip-l1');
+    let horiDetail = tooltip.querySelector('.matrix-tooltip-l2');
     let simScore = tooltip.querySelector('.matrix-tooltip-l3');
 
     horiDetail.innerHTML = horiTrackName + ': Measure ' + (j + 1);
     vertDetail.innerHTML = vertTrackName + ': Measure ' + (i + 1);
     simScore.innerHTML = 'Similarity: ' + this._gridSimVals[i][j].toFixed(2);
 
-    let buffer = 10;
+    let buffer = 15;
     tooltip.style.top = (y - tooltip.clientHeight - buffer) + 'px';
     tooltip.style.left = (x + buffer) + 'px';
 };
@@ -553,7 +561,92 @@ SimilarityMatrixManager.prototype._hideTooltip = function() {
     tooltip.style.left = '0px';
 };
 
-SimilarityMatrixManager.prototype.handleMouseOver = function(event) {
+SimilarityMatrixManager.prototype._renderCellAction = function(ctx, sqLen, i, j, isFill) {
+    let strokeWidth = isFill ? 0 : sqLen / 3;
+    let horiColor = '#72b8c9';
+    let vertColor = '#fe9001';
+
+    let topColor;
+    let bottomColor;
+    if (j < i) {
+        topColor = horiColor;
+        bottomColor = vertColor;
+    } else if (j > i) {
+        bottomColor = horiColor;
+        topColor = vertColor;
+    } else {
+        topColor = vertColor;
+        bottomColor = vertColor;
+    }
+
+    // horizontal track
+    ctx.beginPath();
+    ctx.lineWidth = strokeWidth;
+    if (isFill) {
+        ctx.shadowColor = horiColor;
+        ctx.shadowBlur = 20;
+    }
+    ctx.strokeStyle = horiColor;
+    ctx.fillStyle = horiColor;
+    ctx.rect(j * sqLen, j * sqLen, sqLen, sqLen);
+    isFill ? ctx.fill() : ctx.stroke();
+
+    
+
+    // vertical track
+    ctx.beginPath();
+    ctx.lineWidth = strokeWidth;
+    if (isFill) {
+        ctx.shadowColor = vertColor;
+        ctx.shadowBlur = 20;
+    }
+    ctx.strokeStyle = vertColor;
+    ctx.fillStyle = vertColor;
+    ctx.rect(i * sqLen, i * sqLen, sqLen, sqLen);
+    isFill ? ctx.fill() : ctx.stroke();
+
+    // target cell
+    ctx.lineWidth = strokeWidth;
+
+    // bottom-left, bottom-right, top-right
+    ctx.beginPath();
+    if (isFill) {
+        ctx.shadowColor = bottomColor;
+        ctx.shadowBlur = 20;
+    }
+    ctx.strokeStyle = bottomColor;
+    ctx.fillStyle = bottomColor;
+    ctx.moveTo(j * sqLen, (i + 1) * sqLen);
+    ctx.lineTo((j + 1) * sqLen, (i + 1) * sqLen);
+    ctx.lineTo((j + 1) * sqLen, i * sqLen);
+    isFill ? ctx.fill() : ctx.stroke();
+
+    // bottom-left, top-left, top-right
+    ctx.beginPath();
+    if (isFill) {
+        ctx.shadowColor = topColor;
+        ctx.shadowBlur = 20;
+    }
+    ctx.strokeStyle = topColor;
+    ctx.fillStyle = topColor;
+    ctx.moveTo(j * sqLen, (i + 1) * sqLen + (strokeWidth / 2));
+    ctx.lineTo(j * sqLen, i * sqLen);
+    ctx.lineTo((j + 1) * sqLen + (strokeWidth / 2), i * sqLen);
+    isFill ? ctx.fill() : ctx.stroke();
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0)';
+    ctx.shadowBlur = 0;
+};
+
+SimilarityMatrixManager.prototype._renderFocus = function(ctx, sqLen, i, j) {
+    this._renderCellAction(ctx, sqLen, i, j, false);
+};
+
+SimilarityMatrixManager.prototype._renderActive = function(ctx, sqLen, i, j) {
+    this._renderCellAction(ctx, sqLen, i, j, true);
+};
+
+SimilarityMatrixManager.prototype._preTargetCell = function(event) {
     let canvas = this._elem;
 
     let N = this._gridSimVals.length;
@@ -568,70 +661,91 @@ SimilarityMatrixManager.prototype.handleMouseOver = function(event) {
     ctx.fillStyle = 'rgba(0,0,0,0.85)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    let sheetMusicManager = this.getViewModel()
-                            .getVisualizationManager()
-                            .getSheetMusicPlayerManager()
-                            .getSheetMusicManager();
-
-    let horiTrackPicker = this._simVizManager.getHoriTrackPicker();
-    let vertTrackPicker = this._simVizManager.getVertTrackPicker();
-    let horiTrackInd = horiTrackPicker.getSelectedTrackInd();
-    let vertTrackInd = vertTrackPicker.getSelectedTrackInd();
-
     let ti;
     let tj;
     for (let i = 0; i < N; i++) {
         for (let j = 0; j < N; j++) {
             let score = this._gridSimVals[i][j];
             ctx.beginPath();
+            ctx.fillStyle = this.getColor(score);
             ctx.rect(j * sqLen, i * sqLen, sqLen - 1, sqLen - 1);
+            ctx.fill();
             if (ctx.isPointInPath(x, y)) {
-                ctx.fillStyle = this.getColor(score);
-                ctx.fill();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = 'red';
-                ctx.strokeRect(j * sqLen, i * sqLen, sqLen - 1, sqLen - 1);
-                ctx.stroke();
-
                 ti = i;
                 tj = j;
-
-                sheetMusicManager.highlightHoriTrackMeasure(horiTrackInd, j);
-                sheetMusicManager.highlightVertTrackMeasure(vertTrackInd, i);
-            } else {
-                ctx.fillStyle = this.getColor(score);
-                ctx.fill();
             }
         }
     }
 
-    if (ti != null && tj != null) {
-        ctx.shadowColor = '#72b8c9';
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = '#72b8c9';
-        ctx.fillRect(tj * sqLen, tj * sqLen, sqLen - 1, sqLen - 1);
+    let horiTrackPicker = this._simVizManager.getHoriTrackPicker();
+    let vertTrackPicker = this._simVizManager.getVertTrackPicker();
+    let horiTrackInd = horiTrackPicker.getSelectedTrackInd();
+    let vertTrackInd = vertTrackPicker.getSelectedTrackInd();
 
-        ctx.shadowColor = '#fe9001';
-        ctx.shadowBlur = 10;
-        ctx.fillStyle = '#fe9001';
-        ctx.fillRect(ti * sqLen, ti * sqLen, sqLen - 1, sqLen - 1);
+    return {
+        'ti': ti,
+        'tj': tj,
+        'horiTrackInd': horiTrackInd,
+        'vertTrackInd': vertTrackInd,
+        'sqLen': sqLen,
+        'ctx': ctx
+    };
+};
 
-        ctx.shadowColor = "transparent";
+SimilarityMatrixManager.prototype.handleMouseOver = function(event) {
+    let payload = this._preTargetCell(event);
 
-        this._renderTooltip(event.clientX, event.clientY, ti, tj);
+    if (this._selectedI != null || this._selectedJ != null) {
+        this._renderActive(payload.ctx, payload.sqLen, this._selectedI, this._selectedJ);
     }
+    if (payload.ti == null || payload.tj == null) {
+        return;
+    }
+
+    this._renderFocus(payload.ctx, payload.sqLen, payload.ti, payload.tj);
+    this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
+
+    // sheetMusicManager.highlightHoriTrackMeasure(horiTrackInd, tj);
+    // sheetMusicManager.highlightVertTrackMeasure(vertTrackInd, ti);
+};
+
+SimilarityMatrixManager.prototype.handleMouseClick = function(event) {
+    let payload = this._preTargetCell(event);
+
+    if (payload.ti == null || payload.tj == null) {
+        return;
+    }
+
+    if (this._selectedI == payload.ti && this._selectedJ == payload.tj) {
+        this.handleMouseOver(event);
+        return;
+    }
+
+    this._selectedI = payload.ti;
+    this._selectedJ = payload.tj;
+
+    this._renderActive(payload.ctx, payload.sqLen, payload.ti, payload.tj);
+    this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
+
+    let sheetMusicManager = this.getSheetMusicManager();
+    sheetMusicManager.highlightHoriTrackMeasure(payload.horiTrackInd, payload.tj);
+    sheetMusicManager.highlightVertTrackMeasure(payload.vertTrackInd, payload.ti);
 };
 
 SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     this._hideTooltip();
 
-    let sheetMusicManager = this.getViewModel()
-                            .getVisualizationManager()
-                            .getSheetMusicPlayerManager()
-                            .getSheetMusicManager();
+    let sheetMusicManager = this.getSheetMusicManager();
     sheetMusicManager.hideHoriTrackMeasure();
     sheetMusicManager.hideVertTrackMeasure();
+    
     this.render();
+
+    let canvas = this._elem;
+    let N = this._gridSimVals.length;
+    let sqLen = canvas.width / N;
+    let ctx = canvas.getContext('2d');
+    this._renderActive(ctx, sqLen, this._selectedI, this._selectedJ);
 };
 
 SimilarityMatrixManager.prototype.render = function() {

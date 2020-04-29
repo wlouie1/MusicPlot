@@ -264,11 +264,12 @@ html,body{
 }
 
 .matrix-tooltip-l1 {
-    color: #72b8c9;
+    color: #fe9001;
+    
 }
 
 .matrix-tooltip-l2 {
-    color: #fe9001;
+    color: #72b8c9;
 }
 
 .matrix-tooltip-l3 {
