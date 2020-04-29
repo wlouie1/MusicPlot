@@ -787,10 +787,15 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
     let controlsContainer = this._simVizManager.getControls();
 
     let canvas = this._elem;
-    let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth * 2;
-    let availHeight = this.getViewModel().getVisualizationManager().getElem().clientHeight
-                        - horiTrackPicker.getElem().clientHeight
-                        - controlsContainer.getElem().clientHeight;
+    let canvasParent = this._elem.parentElement;
+    let availWidth = canvasParent.clientWidth;
+    let availHeight = canvasParent.clientHeight - 5;
+    console.log(availWidth)
+    console.log(availHeight);
+    // let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth * 2;
+    // let availHeight = this.getViewModel().getVisualizationManager().getElem().clientHeight
+    //                     - horiTrackPicker.getElem().clientHeight
+    //                     - controlsContainer.getElem().clientHeight;
     canvas.width = Math.min(availWidth, availHeight);
     canvas.height = canvas.width;
 

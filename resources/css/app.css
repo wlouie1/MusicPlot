@@ -25,7 +25,8 @@ html,body{
 }
 
 .header-title {
-    margin-left: 0.67em;
+    /* margin-left: 0.67em; */
+    margin: 0.5em;
 }
 
 .music-select-container {
@@ -139,6 +140,7 @@ html,body{
     box-sizing: border-box;
     padding-top: 20px;
     padding-bottom: 20px;
+    flex: 0 0 auto;
 }
 
 .sim-h-tracks {
@@ -158,6 +160,8 @@ html,body{
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
+    width: 100%;
+    flex: 1 0 auto;
 }
 
 .sim-v-track-container {
@@ -196,6 +200,7 @@ html,body{
     flex-wrap: nowrap;
     align-items: center;
     padding: 30px;
+    flex: 0 0 auto;
 }
 
 .sim-matrix-controls-disabled {
