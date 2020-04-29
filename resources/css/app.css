@@ -227,10 +227,22 @@ html,body{
 }
 
 .music-track1-bbox {
-    background-color: #72b8c9;
+    border: 6px solid #72b8c9;
+    background-color: transparent;
+    /* background-color: #72b8c9; */
 }
 
 .music-track2-bbox {
+    border: 6px solid #fe9001;
+    background-color: transparent;
+    /* background-color: #fe9001; */
+}
+
+.music-track1-selected-bbox {
+    background-color: #72b8c9;
+}
+
+.music-track2-selected-bbox {
     background-color: #fe9001;
 }
 

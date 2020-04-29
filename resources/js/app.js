@@ -705,8 +705,9 @@ SimilarityMatrixManager.prototype.handleMouseOver = function(event) {
     this._renderFocus(payload.ctx, payload.sqLen, payload.ti, payload.tj);
     this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
 
-    // sheetMusicManager.highlightHoriTrackMeasure(horiTrackInd, tj);
-    // sheetMusicManager.highlightVertTrackMeasure(vertTrackInd, ti);
+    let sheetMusicManager = this.getSheetMusicManager();
+    sheetMusicManager.highlightHoriTrackMeasure(payload.horiTrackInd, payload.tj);
+    sheetMusicManager.highlightVertTrackMeasure(payload.vertTrackInd, payload.ti);
 };
 
 SimilarityMatrixManager.prototype.handleMouseClick = function(event) {
@@ -728,8 +729,10 @@ SimilarityMatrixManager.prototype.handleMouseClick = function(event) {
     this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
 
     let sheetMusicManager = this.getSheetMusicManager();
-    sheetMusicManager.highlightHoriTrackMeasure(payload.horiTrackInd, payload.tj);
-    sheetMusicManager.highlightVertTrackMeasure(payload.vertTrackInd, payload.ti);
+    sheetMusicManager.hideHoriTrackMeasure();
+    sheetMusicManager.hideVertTrackMeasure();
+    sheetMusicManager.highlightSelectedHoriTrackMeasure(payload.horiTrackInd, payload.tj);
+    sheetMusicManager.highlightSelectedVertTrackMeasure(payload.vertTrackInd, payload.ti);
 };
 
 SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
@@ -862,7 +865,7 @@ SheetMusicManager.prototype.getElem = function() {
     return this._elem;
 };
 
-SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, trackIndex, measureIndex) {
+SheetMusicManager.prototype._getMeasureBBox = function(trackIndex, measureIndex) {
     let osmd = this._musicManager.getViewModel().getMusicDisplay();
     let sourceMeasure = osmd.Sheet.SourceMeasures[measureIndex];
     let verticalMeasures = sourceMeasure.VerticalMeasureList;
@@ -883,19 +886,40 @@ SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, trackInd
     let height = targetMeasureStave.height * osmd.zoom;
     let width = targetMeasureStave.width * osmd.zoom;
 
+    return {
+        'x': x,
+        'y': y,
+        'width': width,
+        'height': height
+    }
+};
+
+SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, offset, trackIndex, measureIndex) {
+    let bbox = this._getMeasureBBox(trackIndex, measureIndex);
+
     bboxElem.classList.remove('hidden');
-    bboxElem.style.top = y + 'px';
-    bboxElem.style.left = x + 'px';
-    bboxElem.style.width = width + 'px';
-    bboxElem.style.height = height + 'px';
+    bboxElem.style.top = (bbox.y - offset) + 'px';
+    bboxElem.style.left = (bbox.x - offset) + 'px';
+    bboxElem.style.width = bbox.width + 'px';
+    bboxElem.style.height = bbox.height + 'px';
 };
 
 SheetMusicManager.prototype.highlightHoriTrackMeasure = function(trackIndex, measureIndex) {
-    this._highlightTrackMeasure(this._trackbbox1, trackIndex, measureIndex);
+    let offset = 6; // account for borderWidth
+    this._highlightTrackMeasure(this._trackbbox1, offset, trackIndex, measureIndex);
 };
 
 SheetMusicManager.prototype.highlightVertTrackMeasure = function(trackIndex, measureIndex) {
-    this._highlightTrackMeasure(this._trackbbox2, trackIndex, measureIndex);
+    let offset = 6; // account for borderWidth
+    this._highlightTrackMeasure(this._trackbbox2, offset, trackIndex, measureIndex);
+};
+
+SheetMusicManager.prototype.highlightSelectedHoriTrackMeasure = function(trackIndex, measureIndex) {
+    this._highlightTrackMeasure(this._trackbboxSelected1, 0, trackIndex, measureIndex);
+};
+
+SheetMusicManager.prototype.highlightSelectedVertTrackMeasure = function(trackIndex, measureIndex) {
+    this._highlightTrackMeasure(this._trackbboxSelected2, 0, trackIndex, measureIndex);
 };
 
 SheetMusicManager.prototype.hideHoriTrackMeasure = function() {
@@ -904,6 +928,14 @@ SheetMusicManager.prototype.hideHoriTrackMeasure = function() {
 
 SheetMusicManager.prototype.hideVertTrackMeasure = function() {
     this._trackbbox2.classList.add('hidden');
+};
+
+SheetMusicManager.prototype.hideSelectedHoriTrackMeasure = function() {
+    this._trackbboxSelected1.classList.add('hidden');
+};
+
+SheetMusicManager.prototype.hideSelectedVertTrackMeasure = function() {
+    this._trackbboxSelected2.classList.add('hidden');
 };
 
 SheetMusicManager.prototype.render = function() {
@@ -922,9 +954,16 @@ SheetMusicManager.prototype.render = function() {
     this._trackbbox2 = document.createElement('div');
     this._trackbbox2.classList.add('music-track-bbox', 'music-track2-bbox', 'hidden');
 
+    this._trackbboxSelected1 = document.createElement('div');
+    this._trackbboxSelected1.classList.add('music-track-bbox', 'music-track1-selected-bbox', 'hidden');
+    this._trackbboxSelected2 = document.createElement('div');
+    this._trackbboxSelected2.classList.add('music-track-bbox', 'music-track2-selected-bbox', 'hidden');
+
     let drawParent = osmd.cursor.cursorElement.parentElement;
     drawParent.appendChild(this._trackbbox1);
     drawParent.appendChild(this._trackbbox2);
+    drawParent.appendChild(this._trackbboxSelected1);
+    drawParent.appendChild(this._trackbboxSelected2);
 
     osmd.cursor.hide();
 };
