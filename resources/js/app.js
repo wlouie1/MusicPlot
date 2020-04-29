@@ -794,7 +794,7 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
 
     let canvas = this._elem;
     let canvasParent = this._elem.parentElement;
-    let availWidth = canvasParent.clientWidth;
+    let availWidth = canvasParent.clientWidth - 10;
     let availHeight = canvasParent.clientHeight - 5;
     // let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth * 2;
     // let availHeight = this.getViewModel().getVisualizationManager().getElem().clientHeight
