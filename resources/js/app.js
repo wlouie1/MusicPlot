@@ -747,12 +747,14 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     
     this.render(false);
 
-    let canvas = this._elem;
-    let N = this._gridSimVals.length;
-    let sqLen = canvas.width / N;
-    let ctx = canvas.getContext('2d');
-    this._renderActive(ctx, sqLen, this._selectedI, this._selectedJ);
-    this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
+    if (this._selectedI != null) {
+        let canvas = this._elem;
+        let N = this._gridSimVals.length;
+        let sqLen = canvas.width / N;
+        let ctx = canvas.getContext('2d');
+        this._renderActive(ctx, sqLen, this._selectedI, this._selectedJ);
+        this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
+    }
 };
 
 SimilarityMatrixManager.prototype.render = function(clearStates = true) {
