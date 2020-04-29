@@ -268,7 +268,7 @@ html,body{
 
 .matrix-tooltip .tooltip-content-container {
     background-color: #444;
-    /* border: 3px solid #E5E5E5; */
+    border: 3px solid black;
 }
 
 .tooltip-content {

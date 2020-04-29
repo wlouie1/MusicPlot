@@ -357,13 +357,13 @@ function SimilarityMatrixControlsManager(elem, simVizManager) {
             binarizeSlider.classList.add('sim-matrix-controls-disabled');
             binarizeThres.classList.add('sim-matrix-controls-disabled');
         }
-        self._simVizManager.getMatrix().render();
+        self._simVizManager.getMatrix().render(false);
     });
 
     binarizeSlider.addEventListener('input', function(event) {
         self._binarizeThres = this.value;
         binarizeThres.innerHTML = parseFloat(this.value).toFixed(2);
-        self._simVizManager.getMatrix().render();
+        self._simVizManager.getMatrix().render(false);
     });
 }
 
@@ -567,7 +567,7 @@ SimilarityMatrixManager.prototype._renderTooltip = function(x, y, i, j) {
     vertDetail.innerHTML = vertTrackName + ': Measure ' + (i + 1);
     simScore.innerHTML = 'Similarity: ' + this._gridSimVals[i][j].toFixed(2);
 
-    let buffer = 15;
+    let buffer = 20;
     tooltip.style.top = (y - tooltip.clientHeight - buffer) + 'px';
     tooltip.style.left = (x + buffer) + 'px';
 };
@@ -758,32 +758,21 @@ SimilarityMatrixManager.prototype.handleMouseClick = function(event) {
 };
 
 SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
-    this._hideTooltip();
-
     let sheetMusicManager = this.getSheetMusicManager();
     sheetMusicManager.hideHoriTrackMeasure();
     sheetMusicManager.hideVertTrackMeasure();
     
     this.render(false);
-
-    if (this._selectedI != null) {
-        let canvas = this._elem;
-        let N = this._gridSimVals.length;
-        let sqLen = canvas.width / N;
-        let ctx = canvas.getContext('2d');
-        this._renderActive(ctx, sqLen, this._selectedI, this._selectedJ);
-        this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
-    }
 };
 
-SimilarityMatrixManager.prototype.render = function(clearStates = true) {
-    if (clearStates) {
+SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
+    if (clearSelection) {
         this._selectedI = null;
         this._selectedJ = null;
         this._selectedX = null;
         this._selectedY = null;
-        this._hideTooltip();
     }
+    this._hideTooltip();
 
     let horiTrackPicker = this._simVizManager.getHoriTrackPicker();
     let vertTrackPicker = this._simVizManager.getVertTrackPicker();
@@ -836,6 +825,15 @@ SimilarityMatrixManager.prototype.render = function(clearStates = true) {
             ctx.fillRect(j * sqLen, i * sqLen, sqLen - 1, sqLen - 1);
         }
         this._gridSimVals.push(row);
+    }
+
+    // Restore selection
+    if (this._selectedI != null) {
+        let N = this._gridSimVals.length;
+        let sqLen = canvas.width / N;
+        let ctx = canvas.getContext('2d');
+        this._renderActive(ctx, sqLen, this._selectedI, this._selectedJ);
+        this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
     }
 };
 
