@@ -218,6 +218,28 @@ html,body{
     height: 100%;
 }
 
+.music-player {
+    background-color: #8AC73E;
+    padding: 5px;
+}
+
+.music-player-btn {
+    background-color:#8AC73E; /* Blue background */
+    border: none; /* Remove borders */
+    color: white; /* White text */
+    padding: 7px 11px; /* Some padding */
+    font-size: 12px; /* Set a font size */
+    cursor: pointer; /* Mouse pointer on hover */
+}
+
+.music-player-btn:hover {
+    background-color: #485e2a;
+}
+
+.music-player-btn:focus {
+    outline: none;
+}
+
 .music-sheet {
     overflow-y: auto;
 }

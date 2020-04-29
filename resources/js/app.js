@@ -1021,7 +1021,7 @@ SheetMusicManager.prototype.render = function() {
     drawParent.appendChild(this._trackbboxSelected1);
     drawParent.appendChild(this._trackbboxSelected2);
 
-    osmd.cursor.hide();
+    // osmd.cursor.hide();
 };
 
 
