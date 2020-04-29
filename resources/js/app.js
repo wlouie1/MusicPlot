@@ -745,7 +745,7 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     sheetMusicManager.hideHoriTrackMeasure();
     sheetMusicManager.hideVertTrackMeasure();
     
-    this.render();
+    this.render(false);
 
     let canvas = this._elem;
     let N = this._gridSimVals.length;
@@ -755,7 +755,15 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
 };
 
-SimilarityMatrixManager.prototype.render = function() {
+SimilarityMatrixManager.prototype.render = function(clearStates = true) {
+    if (clearStates) {
+        this._selectedI = null;
+        this._selectedJ = null;
+        this._selectedX = null;
+        this._selectedY = null;
+        this._hideTooltip();
+    }
+
     let horiTrackPicker = this._simVizManager.getHoriTrackPicker();
     let vertTrackPicker = this._simVizManager.getVertTrackPicker();
     let horiTrack = horiTrackPicker.getSelectedTrack();
