@@ -771,6 +771,12 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
         this._selectedJ = null;
         this._selectedX = null;
         this._selectedY = null;
+
+        let sheetMusicManager = this.getSheetMusicManager();
+        sheetMusicManager.hideHoriTrackMeasure();
+        sheetMusicManager.hideVertTrackMeasure();
+        sheetMusicManager.hideSelectedHoriTrackMeasure();
+        sheetMusicManager.hideSelectedVertTrackMeasure();
     }
     this._hideTooltip();
 
@@ -784,14 +790,12 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
     // horiTrackPicker.getElem().style.paddingLeft = vertTrackPicker.getElem().clientWidth + 'px';
     // horiTrackPicker.getElem().style.paddingLeft = vertTrackPicker.getElem().clientWidth + 'px';
 
-    let controlsContainer = this._simVizManager.getControls();
+    // let controlsContainer = this._simVizManager.getControls();
 
     let canvas = this._elem;
     let canvasParent = this._elem.parentElement;
     let availWidth = canvasParent.clientWidth;
     let availHeight = canvasParent.clientHeight - 5;
-    console.log(availWidth)
-    console.log(availHeight);
     // let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth * 2;
     // let availHeight = this.getViewModel().getVisualizationManager().getElem().clientHeight
     //                     - horiTrackPicker.getElem().clientHeight
@@ -931,6 +935,10 @@ SheetMusicManager.prototype._getMeasureBBox = function(trackIndex, measureIndex)
 };
 
 SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, offset, trackIndex, measureIndex) {
+    if (!bboxElem) {
+        return;
+    }
+
     let bbox = this._getMeasureBBox(trackIndex, measureIndex);
 
     bboxElem.classList.remove('hidden');
@@ -959,18 +967,30 @@ SheetMusicManager.prototype.highlightSelectedVertTrackMeasure = function(trackIn
 };
 
 SheetMusicManager.prototype.hideHoriTrackMeasure = function() {
+    if (!this._trackbbox1) {
+        return;
+    }
     this._trackbbox1.classList.add('hidden');
 };
 
 SheetMusicManager.prototype.hideVertTrackMeasure = function() {
+    if (!this._trackbbox2) {
+        return;
+    }
     this._trackbbox2.classList.add('hidden');
 };
 
 SheetMusicManager.prototype.hideSelectedHoriTrackMeasure = function() {
+    if (!this._trackbboxSelected1) {
+        return;
+    }
     this._trackbboxSelected1.classList.add('hidden');
 };
 
 SheetMusicManager.prototype.hideSelectedVertTrackMeasure = function() {
+    if (!this._trackbboxSelected2) {
+        return;
+    }
     this._trackbboxSelected2.classList.add('hidden');
 };
 
