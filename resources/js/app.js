@@ -31,7 +31,8 @@ const example_music = [
     // 'mary_had_a_little_lamb_VLN',
     // 'beethoven_sym5_mvt1_ORCH',
     // 'Lady_Gaga_-_poker_face'
-    'bach_846'
+    'bach_846',
+    '988-aria'
 ];
 
 // ==================================================
@@ -395,6 +396,7 @@ SimilarityMatrixControlsManager.prototype.render = function() {
 function SimilarityMatrixManager(elem, simVizManager) {
     this._elem = elem;
     this._simVizManager = simVizManager;
+    this._initialRender = true;
 
     this._elem.addEventListener('click', this.handleMouseClick.bind(this));
     this._elem.addEventListener('mousemove', this.handleMouseOver.bind(this));
@@ -765,6 +767,15 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     this.render(false);
 };
 
+SimilarityMatrixManager.prototype._resizeCanvas = function() {
+    let canvas = this._elem;
+    let canvasParent = this._elem.parentElement;
+    let availWidth = canvasParent.clientWidth - 10;
+    let availHeight = canvasParent.clientHeight - 5;
+    canvas.width = Math.min(availWidth, availHeight);
+    canvas.height = canvas.width;
+};
+
 SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
     if (clearSelection) {
         this._selectedI = null;
@@ -793,17 +804,12 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
     // let controlsContainer = this._simVizManager.getControls();
 
     let canvas = this._elem;
-    let canvasParent = this._elem.parentElement;
-    let availWidth = canvasParent.clientWidth - 10;
-    let availHeight = canvasParent.clientHeight - 5;
-    // let availWidth = canvas.parentElement.clientWidth - vertTrackPicker.getElem().clientWidth * 2;
-    // let availHeight = this.getViewModel().getVisualizationManager().getElem().clientHeight
-    //                     - horiTrackPicker.getElem().clientHeight
-    //                     - controlsContainer.getElem().clientHeight;
-    canvas.width = Math.min(availWidth, availHeight);
-    canvas.height = canvas.width;
-
     let ctx = canvas.getContext('2d');
+
+    if (this._initialRender) {
+        this._resizeCanvas();
+    }
+    this._initialRender = false;
 
     // Clear existing matrix
     ctx.clearRect(0, 0, canvas.width, canvas.height);
