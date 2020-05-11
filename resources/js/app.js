@@ -769,9 +769,10 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
 
 SimilarityMatrixManager.prototype._resizeCanvas = function() {
     let canvas = this._elem;
+    canvas.width = 20;
     let canvasParent = this._elem.parentElement;
-    let availWidth = canvasParent.clientWidth - 10;
-    let availHeight = canvasParent.clientHeight - 5;
+    let availWidth = canvasParent.clientWidth - 25;
+    let availHeight = canvasParent.clientHeight - 10;
     canvas.width = Math.min(availWidth, availHeight);
     canvas.height = canvas.width;
 };
@@ -807,6 +808,7 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
     let ctx = canvas.getContext('2d');
 
     if (this._initialRender) {
+        canvas.classList.remove('invisible');
         this._resizeCanvas();
     }
     this._initialRender = false;

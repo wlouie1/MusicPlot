@@ -166,7 +166,7 @@ html,body{
 
 .sim-v-track-container {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     align-items: center;
     height: 100%;
@@ -199,7 +199,7 @@ html,body{
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    padding: 30px;
+    padding: 20px;
     flex: 0 0 auto;
 }
 
