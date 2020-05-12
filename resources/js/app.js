@@ -111,8 +111,9 @@ ViewModel.prototype.loadMusic = function(fn) {
     // Canvas backend is faster, but at the time of writing, large music sheets
     // are clipped. This may be because there's a browser limit on the canvas height.
     // Use SVG backend instead.
+    // Also disable autoresize--osmd has a bug where after resize, cursor disappears and can't be put back
     let osmd = new opensheetmusicdisplay.OpenSheetMusicDisplay(musicSheetContainer,
-        {backend: 'svg', drawingParameters: 'compact', drawPartNames: true, disableCursor: false});
+        {backend: 'svg', drawingParameters: 'compact', drawPartNames: true, disableCursor: false, autoResize: false});
     let musicPromise = osmd.load(data_root + fn + '.musicxml');
 
     return Promise.all([midiPromise, musicPromise]).then(function(values) {
@@ -867,6 +868,13 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
     if (this._initialRender) {
         canvas.classList.remove('invisible');
         this._resizeCanvas();
+
+        // On window resize, resize the canvas
+        let self = this;
+        window.addEventListener('resize', function() {
+            self._resizeCanvas();
+            self.render(false);
+        });
     }
     this._initialRender = false;
 
@@ -964,6 +972,8 @@ MusicPlayerManager.prototype.render = function() {
 function SheetMusicManager(elem, sheetMusicPlayerManager) {
     this._elem = elem;
     this._musicManager = sheetMusicPlayerManager;
+
+    let self = this;
 }
 
 SheetMusicManager.prototype.getElem = function() {
