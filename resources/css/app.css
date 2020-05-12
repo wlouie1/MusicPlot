@@ -293,6 +293,10 @@ html,body{
     background-color: #fe9001;
 }
 
+.music-cursor-bbox {
+    border: 6px solid #8AC73E;
+    background-color: transparent;
+}
 
 
 

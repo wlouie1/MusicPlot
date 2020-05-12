@@ -1043,10 +1043,12 @@ SheetMusicPlayerManager.prototype.getSheetMusicManager = function() {
 SheetMusicPlayerManager.prototype.setPlayMeasureInd = function(measureInd) {
     if (measureInd == null) {
         // this._sheetMusicManager.moveCursorToMeasureInd();
+        this._sheetMusicManager.hideCursorBox();
         this._sheetMusicManager.getElem().scrollTop = 0;
         return;
     }
     this._sheetMusicManager.moveCursorToMeasureInd(measureInd);
+    this._sheetMusicManager.highlightCursorMeasure();
 };
 
 SheetMusicPlayerManager.prototype.render = function() {
@@ -1104,7 +1106,7 @@ MusicPlayerManager.prototype.play = function() {
     clearInterval(this._interval);
     this._interval = setInterval(function() {
         let status = self._synth.getPlayStatus();
-        
+
         if (status.curTick >= status.maxTick) {
             self.stop();
             return;
@@ -1116,7 +1118,11 @@ MusicPlayerManager.prototype.play = function() {
         }
 
         let currMeasureInd = self._tickToMeasureInd(status.curTick);
-        self.getViewModel().setPlayMeasureInd(currMeasureInd);
+        if (currMeasureInd != self._prevMeasureInd) {
+            self.getViewModel().setPlayMeasureInd(currMeasureInd);
+        }
+
+        self._prevMeasureInd = currMeasureInd;
     }, 1);
 };
 
@@ -1148,6 +1154,7 @@ MusicPlayerManager.prototype.stop = function() {
     playIcon.classList.add('fa-play');
 
     // reset to beginning
+    this._prevMeasureInd = null;
     this._synth.locateMIDI(0);
     this.getViewModel().setPlayMeasureInd(null);
 };
@@ -1391,8 +1398,10 @@ SheetMusicManager.prototype._scrollToView = function(bbox) {
     let visibleBottom = visibleTop + visibleHeight;
 
     if (bbox.y < visibleTop) {
+        console.log('top not visible')
         this._elem.scrollTop = (visibleTop - visibleHeight) + (bbox.height - (visibleTop - bbox.y));
     } else if ((bbox.y + bbox.height) > visibleBottom) {
+        console.log('bottom not visible')
         this._elem.scrollTop = bbox.y;
     }
 };
@@ -1424,6 +1433,37 @@ SheetMusicManager.prototype._getMeasureBBox = function(trackIndex, measureIndex)
         'width': width,
         'height': height
     }
+};
+
+SheetMusicManager.prototype.highlightCursorMeasure = function() {
+    let bboxElem = this._cursorbbox;
+    let offset = 6;
+
+    let osmd = this._musicManager.getViewModel().getMusicDisplay();
+    let cursor = osmd.cursor;
+    let iterator = cursor.iterator;
+    let measureInd = iterator.currentMeasureIndex;
+    
+    let bbox = this._getMeasureBBox(0, measureInd);
+    let height = cursor.cursorElement.clientHeight;
+
+    bboxElem.classList.remove('hidden');
+    bboxElem.style.top = (bbox.y - offset) + 'px';
+    bboxElem.style.left = (bbox.x - offset) + 'px';
+    bboxElem.style.width = bbox.width + 'px';
+    bboxElem.style.height = height + 'px';
+
+    this._scrollToView({
+        'y': bbox.y - 2*offset,
+        'height': height
+    });
+};
+
+SheetMusicManager.prototype.hideCursorBox = function() {
+    if (!this._cursorbbox) {
+        return;
+    }
+    this._cursorbbox.classList.add('hidden');
 };
 
 SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, offset, trackIndex, measureIndex, scrollIntoView) {
@@ -1538,6 +1578,9 @@ SheetMusicManager.prototype.render = function() {
     osmd.render();
     osmd.cursor.show();
 
+    // Make cursor invisible, but still there
+    osmd.cursor.cursorElement.style.opacity = 0;
+
     // Add track measure bounding boxes
     this._trackbbox1 = document.createElement('div');
     this._trackbbox1.classList.add('music-track-bbox', 'music-track1-bbox', 'hidden');
@@ -1554,6 +1597,11 @@ SheetMusicManager.prototype.render = function() {
     drawParent.appendChild(this._trackbbox2);
     drawParent.appendChild(this._trackbboxSelected1);
     drawParent.appendChild(this._trackbboxSelected2);
+
+    // Add cursor bounding box
+    this._cursorbbox = document.createElement('div');
+    this._cursorbbox.classList.add('music-track-bbox', 'music-cursor-bbox', 'hidden');
+    drawParent.appendChild(this._cursorbbox);
 
     // osmd.cursor.hide();
 };
