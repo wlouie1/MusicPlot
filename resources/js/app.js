@@ -392,7 +392,7 @@ function SimilarityMatrixControlsManager(elem, simVizManager) {
     });
 
     let scrollToggle = this._elem.querySelector('.music-scroll-toggle');
-    this._isAutoScrollOn = true; // true by default
+    this._isAutoScrollOn = false; // off by default
     scrollToggle.addEventListener('change', function(event) {
         self._isAutoScrollOn = this.checked;
     });
@@ -809,13 +809,19 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     let sheetMusicManager = this.getSheetMusicManager();
     sheetMusicManager.hideHoriTrackMeasure();
     sheetMusicManager.hideVertTrackMeasure();
-
-    // Restore selection scroll position
-    if (this._selectionScrollTop != null) {
-        sheetMusicManager.getElem().scrollTop = this._selectionScrollTop;
-    }
     
     this.render(false);
+
+    // Restore selection scroll position
+    let controls = this._simVizManager.getControls();
+    let isAutoScrollOn = controls.isAutoScrollOn();
+    if (isAutoScrollOn && this._selectionScrollTop != null) {
+        let self = this;
+        // Somehow, scroll-behavior smooth needs some time for the scrollTop to update
+        setTimeout(function() {
+            sheetMusicManager.getElem().scrollTop = self._selectionScrollTop;
+        }, 100);
+    }
 };
 
 SimilarityMatrixManager.prototype._resizeCanvas = function() {
