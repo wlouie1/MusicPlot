@@ -251,6 +251,7 @@ html,body{
 
 .music-sheet {
     overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 .music-track-bbox {

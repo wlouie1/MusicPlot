@@ -752,8 +752,10 @@ SimilarityMatrixManager.prototype.handleMouseOver = function(event) {
     this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
 
     let sheetMusicManager = this.getSheetMusicManager();
-    sheetMusicManager.highlightHoriTrackMeasure(payload.horiTrackInd, payload.tj);
-    sheetMusicManager.highlightVertTrackMeasure(payload.vertTrackInd, payload.ti);
+    let scrollHoriIntoView = payload.tj > payload.ti;
+    let scrollVertIntoView = !scrollHoriIntoView;
+    sheetMusicManager.highlightHoriTrackMeasure(payload.horiTrackInd, payload.tj, scrollHoriIntoView);
+    sheetMusicManager.highlightVertTrackMeasure(payload.vertTrackInd, payload.ti, scrollVertIntoView);
 };
 
 SimilarityMatrixManager.prototype.handleMouseClick = function(event) {
@@ -937,6 +939,18 @@ SheetMusicManager.prototype.getElem = function() {
     return this._elem;
 };
 
+SheetMusicManager.prototype._scrollToView = function(bbox) {
+    let visibleTop = this._elem.scrollTop || 0;
+    let visibleHeight = this._elem.clientHeight
+    let visibleBottom = visibleTop + visibleHeight;
+
+    if (bbox.y < visibleTop) {
+        this._elem.scrollTop = (visibleTop - visibleHeight) + (bbox.height - (visibleTop - bbox.y));
+    } else if ((bbox.y + bbox.height) > visibleBottom) {
+        this._elem.scrollTop = bbox.y;
+    }
+};
+
 SheetMusicManager.prototype._getMeasureBBox = function(trackIndex, measureIndex) {
     let osmd = this._musicManager.getViewModel().getMusicDisplay();
     let sourceMeasure = osmd.Sheet.SourceMeasures[measureIndex];
@@ -966,7 +980,7 @@ SheetMusicManager.prototype._getMeasureBBox = function(trackIndex, measureIndex)
     }
 };
 
-SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, offset, trackIndex, measureIndex) {
+SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, offset, trackIndex, measureIndex, scrollIntoView) {
     if (!bboxElem) {
         return;
     }
@@ -978,16 +992,23 @@ SheetMusicManager.prototype._highlightTrackMeasure = function(bboxElem, offset, 
     bboxElem.style.left = (bbox.x - offset) + 'px';
     bboxElem.style.width = bbox.width + 'px';
     bboxElem.style.height = bbox.height + 'px';
+
+    if (scrollIntoView) {
+        this._scrollToView({
+            'y': bbox.y - 2*offset,
+            'height': bbox.height
+        });
+    }
 };
 
-SheetMusicManager.prototype.highlightHoriTrackMeasure = function(trackIndex, measureIndex) {
+SheetMusicManager.prototype.highlightHoriTrackMeasure = function(trackIndex, measureIndex, scrollIntoView) {
     let offset = 6; // account for borderWidth
-    this._highlightTrackMeasure(this._trackbbox1, offset, trackIndex, measureIndex);
+    this._highlightTrackMeasure(this._trackbbox1, offset, trackIndex, measureIndex, scrollIntoView);
 };
 
-SheetMusicManager.prototype.highlightVertTrackMeasure = function(trackIndex, measureIndex) {
+SheetMusicManager.prototype.highlightVertTrackMeasure = function(trackIndex, measureIndex, scrollIntoView) {
     let offset = 6; // account for borderWidth
-    this._highlightTrackMeasure(this._trackbbox2, offset, trackIndex, measureIndex);
+    this._highlightTrackMeasure(this._trackbbox2, offset, trackIndex, measureIndex, scrollIntoView);
 };
 
 SheetMusicManager.prototype.highlightSelectedHoriTrackMeasure = function(trackIndex, measureIndex) {
