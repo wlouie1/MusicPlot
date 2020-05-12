@@ -80,6 +80,10 @@ ViewModel.prototype.getVisualizationManager = function() {
     return this._vizManager;
 };
 
+ViewModel.prototype.setPlayMeasureInd = function(measureInd) {
+    this._vizManager.setPlayMeasureInd(measureInd);
+};
+
 ViewModel.prototype._preloadMusic = function() {
     let loadingContainer = this._vizManager.getElem();
     loadingContainer.appendChild(this._loadingOverlay);
@@ -225,6 +229,11 @@ VisualizationManager.prototype.getSheetMusicPlayerManager = function() {
     return this._music;
 };
 
+VisualizationManager.prototype.setPlayMeasureInd = function(measureInd) {
+    this._music.setPlayMeasureInd(measureInd);
+    this._matrixViz.setPlayMeasureInd(measureInd);
+};
+
 VisualizationManager.prototype.render = function() {
     this._matrixViz.render();
     this._music.render();
@@ -273,6 +282,10 @@ SimilarityVizManager.prototype.getMatrix = function() {
 
 SimilarityVizManager.prototype.getControls = function() {
     return this._matrixControls;
+};
+
+SimilarityVizManager.prototype.setPlayMeasureInd = function(measureInd) {
+    this._matrix.setPlayMeasureInd(measureInd);
 };
 
 SimilarityVizManager.prototype.render = function() {
@@ -853,6 +866,14 @@ SimilarityMatrixManager.prototype._resizeCanvas = function() {
     canvas.height = canvas.width;
 };
 
+SimilarityMatrixManager.prototype.setPlayMeasureInd = function(measureInd) {
+    if (measureInd == null) {
+
+        return;
+    }
+
+};
+
 SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
     if (clearSelection) {
         this._selectedI = null;
@@ -965,6 +986,14 @@ SheetMusicPlayerManager.prototype.getSheetMusicManager = function() {
     return this._sheetMusicManager;
 };
 
+SheetMusicPlayerManager.prototype.setPlayMeasureInd = function(measureInd) {
+    if (measureInd == null) {
+        
+        return;
+    }
+    this._sheetMusicManager.moveCursorToMeasureInd(measureInd);
+};
+
 SheetMusicPlayerManager.prototype.render = function() {
     this._sheetMusicManager.render();
     this._musicPlayerManager.setup();
@@ -983,60 +1012,11 @@ function MusicPlayerManager(elem, sheetMusicPlayerManager) {
     this._playing = false;
     this._playBtn = this._elem.querySelector('.player-play-toggle');
     this._playBtn.addEventListener('click', function(event) {
-        let icon = this.querySelector('.fa');
-        if (self._playing) {
-            // pause
-            icon.classList.remove('fa-pause');
-            icon.classList.add('fa-play');
-            self._playing = false;
-            self._synth.stopMIDI();
-        } else {
-            // play
-            icon.classList.remove('fa-play');
-            icon.classList.add('fa-pause');
-            self._playing = true;
-
-            self._synth.playMIDI();
-        }
-
-        self._interval = setInterval(function() {
-            let status = self._synth.getPlayStatus();
-            
-            if (!status.play) {
-                clearInterval(self._interval);
-                return;
-            }
-
-            if (self._playing) {
-                let currMeasureInd = self._tickToMeasureInd(status.curTick);
-                self._musicManager.getSheetMusicManager().moveCursorToMeasureInd(currMeasureInd);
-                // let currTime = self._tickToTime(status.curTick);
-                // self._musicManager.getSheetMusicManager().moveCursorToTime(currTime);
-                // console.log(status)
-            }
-        }, 1);
+        self._playing ? self.pause() : self.play();
     });
 
     this._stopBtn = this._elem.querySelector('.player-stop');
-    this._stopBtn.addEventListener('click', function(event) {
-        if (self._playing) {
-            // stop playing
-            self._synth.stopMIDI();
-        }
-
-        // Clear interval
-        clearInterval(self._interval);
-
-        self._playing = false;
-        
-        // change to play icon
-        let playIcon = self._playBtn.querySelector('.fa');
-        playIcon.classList.remove('fa-pause');
-        playIcon.classList.add('fa-play');
-
-        // reset to beginning
-        self._synth.locateMIDI(0);
-    });
+    this._stopBtn.addEventListener('click', this.stop.bind(this));
 }
 
 MusicPlayerManager.prototype.getElem = function() {
@@ -1045,6 +1025,65 @@ MusicPlayerManager.prototype.getElem = function() {
 
 MusicPlayerManager.prototype.getViewModel = function() {
     return this._musicManager.getViewModel();
+};
+
+MusicPlayerManager.prototype.play = function() {
+    this._playing = true;
+
+    // play icon
+    let icon = this._playBtn.querySelector('.fa');
+    icon.classList.remove('fa-play');
+    icon.classList.add('fa-pause');
+    
+
+    // play midi
+    this._synth.playMIDI();
+
+    // continuously check and update view every 1ms
+    let self = this;
+    clearInterval(this._interval);
+    this._interval = setInterval(function() {
+        let status = self._synth.getPlayStatus();
+        
+        if (!status.play || !self._playing) {
+            clearInterval(self._interval);
+            return;
+        }
+
+        let currMeasureInd = self._tickToMeasureInd(status.curTick);
+        self.getViewModel().setPlayMeasureInd(currMeasureInd);
+    }, 1);
+};
+
+MusicPlayerManager.prototype.pause = function() {
+    this._playing = false;
+
+    // pause icon
+    let icon = this._playBtn.querySelector('.fa');
+    icon.classList.remove('fa-pause');
+    icon.classList.add('fa-play');
+
+    // pause midi
+    this._synth.stopMIDI();
+};
+
+MusicPlayerManager.prototype.stop = function() {
+    if (this._playing) {
+        // stop playing
+        this._synth.stopMIDI();
+        this._playing = false;
+    }
+
+    // Clear interval
+    clearInterval(this._interval);
+    
+    // change to play icon
+    let playIcon = this._playBtn.querySelector('.fa');
+    playIcon.classList.remove('fa-pause');
+    playIcon.classList.add('fa-play');
+
+    // reset to beginning
+    this._synth.locateMIDI(0);
 };
 
 MusicPlayerManager.prototype._computeMidiMeasureTicks = function() {
@@ -1085,6 +1124,13 @@ MusicPlayerManager.prototype._tickToMeasureInd = function(tick) {
         }
     }
     return this._midiMeasureTicks.length - 1; // should not happen
+};
+
+MusicPlayerManager.prototype._measureIndToTick = function(measureInd) {
+    if (measureInd === 0) {
+        return 0;
+    }
+    return this._midiMeasureTicks[measureInd - 1];
 };
 
 // MusicPlayerManager.prototype._tickToTime = function(tick) {
