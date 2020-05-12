@@ -1001,14 +1001,20 @@ function MusicPlayerManager(elem, sheetMusicPlayerManager) {
 
         self._interval = setInterval(function() {
             let status = self._synth.getPlayStatus();
-            if (self._playing) {
-                console.log(status);
-            }
-
+            
             if (!status.play) {
                 clearInterval(self._interval);
+                return;
             }
-        }, 100);
+
+            if (self._playing) {
+                let currMeasureInd = self._tickToMeasureInd(status.curTick);
+                self._musicManager.getSheetMusicManager().moveCursorToMeasureInd(currMeasureInd);
+                // let currTime = self._tickToTime(status.curTick);
+                // self._musicManager.getSheetMusicManager().moveCursorToTime(currTime);
+                // console.log(status)
+            }
+        }, 1);
     });
 
     this._stopBtn = this._elem.querySelector('.player-stop');
@@ -1041,6 +1047,124 @@ MusicPlayerManager.prototype.getViewModel = function() {
     return this._musicManager.getViewModel();
 };
 
+MusicPlayerManager.prototype._computeMidiMeasureTicks = function() {
+    let midi = this.getViewModel().getMidi();
+    let maxTick = midi.durationTicks;
+    let ppq = midi.header.ppq;
+
+    let defaultTimeSig = [4, 4];
+    let timeSigs = midi.header.timeSignatures.map(function(timeSig) {
+        return [timeSig.measures, timeSig.timeSignature ? timeSig.timeSignature : defaultTimeSig];
+    });
+    if (timeSigs.length === 0) {
+        timeSigs.push([0, defaultTimeSig]);
+    }
+    timeSigs.push([-1, defaultTimeSig]);
+
+    let measureEndTicks = [];
+    let measureTickStart = 0;
+    for (let i = 1; i < timeSigs.length; i++) {
+        let nn = timeSigs[i - 1][1][0];
+        let dd = timeSigs[i - 1][1][1];
+        let measureLength = ppq * 4 * nn / dd;
+        while (timeSigs[i][0] === -1 && measureTickStart < maxTick) {
+            let measureTickEnd = measureTickStart + measureLength;
+            measureEndTicks.push(measureTickEnd);
+            measureTickStart = measureTickEnd;
+        }
+    }
+
+    return measureEndTicks;
+};
+
+MusicPlayerManager.prototype._tickToMeasureInd = function(tick) {
+    for (let i = 0; i < this._midiMeasureTicks.length; i++) {
+        let measureTickEnd = this._midiMeasureTicks[i];
+        if (tick < measureTickEnd) {
+            return i;
+        }
+    }
+    return this._midiMeasureTicks.length - 1; // should not happen
+};
+
+// MusicPlayerManager.prototype._tickToTime = function(tick) {
+    
+// };
+
+// MusicPlayerManager.prototype._midiOnTicks = function() {
+//     let onTicks = new Set();
+
+//     let midi = this.getViewModel().getMidi();
+//     midi.tracks.forEach(function(track) {
+//         track.notes.forEach(function(note) {
+//             onTicks.add(note.ticks);
+//         });
+//     });
+
+//     return Array.from(onTicks).sort();
+// };
+
+// MusicPlayerManager.prototype._getMidiMeasureTimeInfo = function() {
+//     let midi = this.getViewModel().getMidi();
+//     let maxTick = midi.durationTicks;
+//     let tempos = midi.header.tempos;
+//     let ppq = midi.header.ppq;
+
+//     let defaultTimeSig = [4, 4];
+//     let timeSigs = midi.header.timeSignatures.map(function(timeSig) {
+//         return [timeSig.measures, timeSig.timeSignature ? timeSig.timeSignature : defaultTimeSig];
+//     });
+//     if (timeSigs.length === 0) {
+//         timeSigs.push([0, defaultTimeSig]);
+//     }
+//     timeSigs.push([-1, defaultTimeSig]);
+
+
+
+//     let measureBPMs = [];
+//     let measureEndTicks = [];
+//     let measureDurations = [];
+//     let measureTickStart = 0;
+//     for (let i = 1; i < timeSigs.length; i++) {
+//         let nn = timeSigs[i - 1][1][0];
+//         let dd = timeSigs[i - 1][1][1];
+//         let measureLength = ppq * 4 * nn / dd;
+//         while (timeSigs[i][0] === -1 && measureTickStart < maxTick) {
+//             let measureTickEnd = measureTickStart + measureLength;
+//             measureEndTicks.push(measureTickEnd);
+
+//             let bpm;
+//             if (tempos.length == 1) {
+//                 bpm = tempos[0].bpm;
+//             } else {
+//                 let measureTempo = tempos[tempos.length - 1];
+//                 for (let j = 1; j < tempos.length; j++) {
+//                     if (tempos[j].ticks > measureTickEnd) {
+//                         measureTempo = tempos[j - 1];
+//                         break;
+//                     }
+//                 }
+//                 bpm = measureTempo.bpm;
+//             }
+
+//             measureBPMs.push(bpm);
+//             measureDurations.push((60000 / (bpm * ppq)) * measureLength); // ms
+
+//             measureTickStart = measureTickEnd;
+//         }
+//     }
+
+//     return {
+//         measureBPMs: measureBPMs,
+//         measureEndTicks: measureEndTicks,
+//         measureDurations: measureDurations
+//     };
+// };
+
+// MusicPlayerManager.prototype._tickToTime = function(tick) {
+    
+// };
+
 MusicPlayerManager.prototype.setup = function() {
     if (this._synth == null) {
         this._synth = new WebAudioTinySynth();
@@ -1052,7 +1176,60 @@ MusicPlayerManager.prototype.setup = function() {
     // change to play icon
     let playIcon = this._playBtn.querySelector('.fa');
     playIcon.classList.remove('fa-pause');
-    playIcon.classList.add('fa-play');    
+    playIcon.classList.add('fa-play');
+
+    this._midiMeasureTicks = this._computeMidiMeasureTicks();
+
+    // console.log(this._midiOnTicks());
+
+    // let cursorLength = 0;
+    // let osmd = this.getViewModel().getMusicDisplay();
+    // osmd.cursor.reset()
+    // let iterator = osmd.cursor.iterator;
+
+    // let tieSet = new Set();
+    // while(!iterator.endReached){
+    //     let voices = iterator.currentVoiceEntries;
+    //     let silentVoices = 0;
+        
+    //     for(var i = 0; i < voices.length; i++){
+    //         let v = voices[i];
+    //         let notes = v.notes;
+    //         let silentNotes = 0;
+    //         // console.log(v)
+    //         for(var j = 0; j < notes.length; j++){
+    //             let note = notes[j];
+    //             // console.log(note.tie)
+    //             if (note.tie) {
+    //                 // console.log(note.tie)
+    //                 // note.tie.forEach(function(t) {
+    //                 //     tieSet.add(note.tie);
+    //                 // })
+    //                 tieSet.add(note.tie.notes);
+    //             }
+    //             // tieSet.add(note.tie.notes);
+                
+    //             // make sure our note is not silent
+    //             if((note != null) && (note.halfTone != 0)){
+    //                 // cursorLength += 1;
+    //             } else {
+    //                 silentNotes += 1
+    //             }
+    //         }
+    //         if (silentNotes == notes.length) {
+    //             silentVoices += 1
+    //         }
+    //     }
+    //     if (silentVoices < voices.length) {
+    //         cursorLength += 1;
+    //     }
+        
+        
+    //     iterator.moveToNext()
+    // }
+    // console.log(cursorLength);
+    // console.log(tieSet.size);
+
 };
 
 // ==================================================
@@ -1062,8 +1239,6 @@ MusicPlayerManager.prototype.setup = function() {
 function SheetMusicManager(elem, sheetMusicPlayerManager) {
     this._elem = elem;
     this._musicManager = sheetMusicPlayerManager;
-
-    let self = this;
 }
 
 SheetMusicManager.prototype.getElem = function() {
@@ -1176,6 +1351,41 @@ SheetMusicManager.prototype.hideSelectedVertTrackMeasure = function() {
         return;
     }
     this._trackbboxSelected2.classList.add('hidden');
+};
+
+// SheetMusicManager.prototype._initCursorIterator = function(startMeasureInd) {
+//     let osmd = viewModel.getMusicDisplay();
+//     osmd.cursor.resetIterator();
+
+//     this._cursorIterator = function* () {
+
+//     };
+// };
+
+// SheetMusicManager.prototype.moveCursorToTime = function(second) {
+
+// };
+
+// SheetMusicManager.prototype.moveCursorToMeasure = function(measureInd) {
+//     let osmd = viewModel.getMusicDisplay();
+//     this._initCursorIterator(measureInd);
+//     osmd.cursor.update();
+// };
+
+SheetMusicManager.prototype.moveCursorToMeasureInd = function(measureInd) {
+    let viewModel = this._musicManager.getViewModel();
+    let osmd = viewModel.getMusicDisplay();
+    let cursor = osmd.cursor;
+    cursor.resetIterator();
+    let iterator = cursor.iterator;
+    let currMeasureInd = 0;
+
+    while (currMeasureInd < measureInd && !iterator.endReached) {
+        iterator.moveToNext();
+        currMeasureInd = iterator.currentMeasureIndex;
+    }
+
+    cursor.update();
 };
 
 SheetMusicManager.prototype.render = function() {
