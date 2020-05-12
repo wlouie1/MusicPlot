@@ -414,13 +414,13 @@ function SimilarityMatrixControlsManager(elem, simVizManager) {
             binarizeSlider.classList.add('sim-matrix-controls-disabled');
             binarizeThres.classList.add('sim-matrix-controls-disabled');
         }
-        self._simVizManager.getMatrix().render(false);
+        self._simVizManager.getMatrix().render(false, false, true);
     });
 
     binarizeSlider.addEventListener('input', function(event) {
         self._binarizeThres = this.value;
         binarizeThres.innerHTML = parseFloat(this.value).toFixed(2);
-        self._simVizManager.getMatrix().render(false);
+        self._simVizManager.getMatrix().render(false, false, true);
     });
 
     let scrollToggle = this._elem.querySelector('.music-scroll-toggle');
@@ -648,6 +648,23 @@ SimilarityMatrixManager.prototype._hideTooltip = function() {
     tooltip.style.left = '0px';
 };
 
+SimilarityMatrixManager.prototype._renderPlayCell = function(measureInd) {
+    this.render(false, true, false);
+
+    let canvas = this._elem;
+    let N = this._gridSimVals.length;
+    let sqLen = canvas.width / N;
+    let ctx = canvas.getContext('2d');
+
+    ctx.beginPath();
+    ctx.lineWidth = sqLen / 3;
+    ctx.strokeStyle = '#8AC73E';
+    ctx.rect(measureInd * sqLen, measureInd * sqLen, sqLen, sqLen);
+    ctx.stroke();
+
+    this._playMeasureInd = measureInd;
+};
+
 SimilarityMatrixManager.prototype._renderCellAction = function(ctx, sqLen, i, j, isFill) {
     let strokeWidth = isFill ? 0 : sqLen / 3;
     let horiColor = '#72b8c9';
@@ -786,9 +803,17 @@ SimilarityMatrixManager.prototype.handleMouseOver = function(event) {
     if (this._selectedI != null || this._selectedJ != null) {
         this._renderActive(payload.ctx, payload.sqLen, this._selectedI, this._selectedJ);
     }
+    if (this._playMeasureInd != null) {
+        this._renderPlayCell(this._playMeasureInd);
+    }
     if (payload.ti == null || payload.tj == null) {
         return;
     }
+
+    this._focusI = payload.ti;
+    this._focusJ = payload.tj;
+    this._focusX = event.clientX;
+    this._focusY = event.clientY;
 
     this._renderFocus(payload.ctx, payload.sqLen, payload.ti, payload.tj);
     this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
@@ -842,7 +867,7 @@ SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     sheetMusicManager.hideHoriTrackMeasure();
     sheetMusicManager.hideVertTrackMeasure();
     
-    this.render(false);
+    this.render(false, false, true);
 
     // Restore selection scroll position
     let controls = this._simVizManager.getControls();
@@ -867,14 +892,16 @@ SimilarityMatrixManager.prototype._resizeCanvas = function() {
 };
 
 SimilarityMatrixManager.prototype.setPlayMeasureInd = function(measureInd) {
+    this._playMeasureInd = measureInd;
     if (measureInd == null) {
-
+        // Redraw, clear away play cell
+        this.render(false, true, false);
         return;
     }
-
+    this._renderPlayCell(measureInd);
 };
 
-SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
+SimilarityMatrixManager.prototype.render = function(clearSelection = true, clearPlay = true, clearFocus = true) {
     if (clearSelection) {
         this._selectedI = null;
         this._selectedJ = null;
@@ -882,10 +909,21 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
         this._selectedY = null;
 
         let sheetMusicManager = this.getSheetMusicManager();
-        sheetMusicManager.hideHoriTrackMeasure();
-        sheetMusicManager.hideVertTrackMeasure();
         sheetMusicManager.hideSelectedHoriTrackMeasure();
         sheetMusicManager.hideSelectedVertTrackMeasure();
+    }
+    if (clearPlay) {
+        this._playMeasureInd = null;
+    }
+    if (clearFocus) {
+        this._focusI = null;
+        this._focusJ = null;
+        this._focusX = null;
+        this._focusY = null;
+
+        let sheetMusicManager = this.getSheetMusicManager();
+        sheetMusicManager.hideHoriTrackMeasure();
+        sheetMusicManager.hideVertTrackMeasure();
     }
     this._hideTooltip();
 
@@ -912,7 +950,7 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
         let self = this;
         window.addEventListener('resize', function() {
             self._resizeCanvas();
-            self.render(false);
+            self.render(false, false, true);
         });
     }
     this._initialRender = false;
@@ -954,7 +992,23 @@ SimilarityMatrixManager.prototype.render = function(clearSelection = true) {
         let sqLen = canvas.width / N;
         let ctx = canvas.getContext('2d');
         this._renderActive(ctx, sqLen, this._selectedI, this._selectedJ);
-        this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
+        if (this._focusI == null) {
+            this._renderTooltip(this._selectedX, this._selectedY, this._selectedI, this._selectedJ);
+        }
+    }
+
+    // Restore play state
+    if (this._playMeasureInd != null) {
+        this._renderPlayCell(this._playMeasureInd);
+    }
+
+    // Restore focus
+    if (this._focusI != null) {
+        let N = this._gridSimVals.length;
+        let sqLen = canvas.width / N;
+        let ctx = canvas.getContext('2d');
+        this._renderFocus(ctx, sqLen, this._focusI, this._focusJ);
+        this._renderTooltip(this._focusX, this._focusY, this._focusI, this._focusJ);
     }
 };
 
@@ -988,7 +1042,8 @@ SheetMusicPlayerManager.prototype.getSheetMusicManager = function() {
 
 SheetMusicPlayerManager.prototype.setPlayMeasureInd = function(measureInd) {
     if (measureInd == null) {
-        this._sheetMusicManager.moveCursorToMeasureInd(0);
+        // this._sheetMusicManager.moveCursorToMeasureInd();
+        this._sheetMusicManager.getElem().scrollTop = 0;
         return;
     }
     this._sheetMusicManager.moveCursorToMeasureInd(measureInd);
@@ -1050,8 +1105,13 @@ MusicPlayerManager.prototype.play = function() {
     this._interval = setInterval(function() {
         let status = self._synth.getPlayStatus();
         
+        if (status.curTick >= status.maxTick) {
+            self.stop();
+            return;
+        }
+        
         if (!status.play || !self._playing) {
-            clearInterval(self._interval);
+            clearInterval(this._interval);
             return;
         }
 
