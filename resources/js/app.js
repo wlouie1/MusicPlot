@@ -47,6 +47,9 @@ function ViewModel(elem) {
 
     let vizContainer = this._elem.querySelector('.viz-container');
     this._vizManager = new VisualizationManager(vizContainer, this);
+
+    this._loadingOverlay = document.createElement('div');
+    this._loadingOverlay.classList.add('loading-overlay');
 }
 
 ViewModel.prototype.getElem = function() {
@@ -73,7 +76,27 @@ ViewModel.prototype.getVisualizationManager = function() {
     return this._vizManager;
 };
 
+ViewModel.prototype._preloadMusic = function() {
+    let loadingContainer = this._vizManager.getElem();
+    loadingContainer.appendChild(this._loadingOverlay);
+    NProgress.configure({ 
+        parent: this._vizManager.getElem()
+    });
+    NProgress.start();
+    NProgress.set(0.3);
+};
+
+ViewModel.prototype.loadMusicEnd = function() {
+    let self = this;
+    setTimeout(function() {
+        NProgress.done();
+        let loadingContainer = self._vizManager.getElem();
+        loadingContainer.removeChild(self._loadingOverlay);
+    }, 1500);
+};
+
 ViewModel.prototype.loadMusic = function(fn) {
+    this._preloadMusic();
     let midiPromise = Midi.fromUrl(data_root + fn + '.mid');
 
     let musicSheetContainer = this.getVisualizationManager()
@@ -152,7 +175,7 @@ MidiInputManager.prototype.render = function() {
             viewModel.setMidi(midi);
             viewModel.setMusicDisplay(osmd);
             viewModel.getVisualizationManager().render();
-        });
+        }).then(viewModel.loadMusicEnd.bind(viewModel));
     });
 };
 
@@ -186,6 +209,7 @@ VisualizationManager.prototype.getSheetMusicPlayerManager = function() {
 VisualizationManager.prototype.render = function() {
     this._matrixViz.render();
     this._music.render();
+    
 };
 
 // ==================================================
@@ -1046,7 +1070,7 @@ function main() {
             viewModel.setMidi(midi);
             viewModel.setMusicDisplay(osmd);
             viewModel.render();
-        });
+        }).then(viewModel.loadMusicEnd.bind(viewModel));
     };
     
     if (document.readyState === 'loading') {

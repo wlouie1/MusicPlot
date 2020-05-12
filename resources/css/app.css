@@ -67,11 +67,20 @@ html,body{
 }
 
 .viz-container {
+    position: relative;
     display: flex;
     flex-wrap: nowrap;
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+.loading-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    opacity: 0.8;
 }
 
 .sim-matrix-container {
@@ -427,4 +436,17 @@ html input[type="range"] {
   }
   html input[type="range"]::-ms-fill-upper {
     background-color: #fff;
+  }
+
+
+
+  /* nbprogress override */
+  #nprogress .spinner {
+    top: calc(50% - 50px);
+    right: calc(50% - 50px);
+  }
+
+  #nprogress .spinner-icon {
+    width: 100px;
+    height: 100px;
   }
