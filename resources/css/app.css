@@ -147,8 +147,8 @@ html,body{
     align-items: center;
     width: 100%;
     box-sizing: border-box;
-    padding-top: 20px;
-    padding-bottom: 20px;
+    padding-top: 10px;
+    padding-bottom: 10px;
     flex: 0 0 auto;
 }
 
@@ -179,8 +179,8 @@ html,body{
     justify-content: center;
     align-items: center;
     height: 100%;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .sim-v-tracks {
@@ -206,10 +206,20 @@ html,body{
 
 .sim-matrix-controls-container {
     display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.sim-matrix-controls-row {
+    display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    padding: 20px;
     flex: 0 0 auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
 }
 
 .sim-matrix-controls-disabled {
@@ -378,6 +388,14 @@ input:checked + .slider {
 
 input:focus + .slider {
     box-shadow: 0 0 1px #2196F3;
+}
+
+.music-scroll-toggle:checked + .slider {
+    background-color: #485e2a;
+}
+
+.music-scroll-toggle:focus + .slider {
+    box-shadow: 0 0 1px #485e2a;
 }
 
 input:checked + .slider:before {

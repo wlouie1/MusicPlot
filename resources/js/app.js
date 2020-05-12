@@ -390,6 +390,12 @@ function SimilarityMatrixControlsManager(elem, simVizManager) {
         binarizeThres.innerHTML = parseFloat(this.value).toFixed(2);
         self._simVizManager.getMatrix().render(false);
     });
+
+    let scrollToggle = this._elem.querySelector('.music-scroll-toggle');
+    this._isAutoScrollOn = true; // true by default
+    scrollToggle.addEventListener('change', function(event) {
+        self._isAutoScrollOn = this.checked;
+    });
 }
 
 SimilarityMatrixControlsManager.prototype.getElem = function() {
@@ -406,6 +412,10 @@ SimilarityMatrixControlsManager.prototype.isBinarizeOn = function() {
 
 SimilarityMatrixControlsManager.prototype.getBinarizeThres = function() {
     return this._binarizeThres;
+};
+
+SimilarityMatrixControlsManager.prototype.isAutoScrollOn = function() {
+    return this._isAutoScrollOn;
 };
 
 SimilarityMatrixControlsManager.prototype.render = function() {
@@ -751,9 +761,16 @@ SimilarityMatrixManager.prototype.handleMouseOver = function(event) {
     this._renderFocus(payload.ctx, payload.sqLen, payload.ti, payload.tj);
     this._renderTooltip(event.clientX, event.clientY, payload.ti, payload.tj);
 
+    let controls = this._simVizManager.getControls();
+    let isAutoScrollOn = controls.isAutoScrollOn();
+    let scrollHoriIntoView = false;
+    let scrollVertIntoView = false
+    if (isAutoScrollOn) {
+        scrollHoriIntoView = payload.tj > payload.ti;
+        scrollVertIntoView = !scrollHoriIntoView;
+    }
+    
     let sheetMusicManager = this.getSheetMusicManager();
-    let scrollHoriIntoView = payload.tj > payload.ti;
-    let scrollVertIntoView = !scrollHoriIntoView;
     sheetMusicManager.highlightHoriTrackMeasure(payload.horiTrackInd, payload.tj, scrollHoriIntoView);
     sheetMusicManager.highlightVertTrackMeasure(payload.vertTrackInd, payload.ti, scrollVertIntoView);
 };
@@ -783,12 +800,20 @@ SimilarityMatrixManager.prototype.handleMouseClick = function(event) {
     sheetMusicManager.hideVertTrackMeasure();
     sheetMusicManager.highlightSelectedHoriTrackMeasure(payload.horiTrackInd, payload.tj);
     sheetMusicManager.highlightSelectedVertTrackMeasure(payload.vertTrackInd, payload.ti);
+
+    // Save scroll position; selection is visible right now, and can be restored on mouse leave
+    this._selectionScrollTop = sheetMusicManager.getElem().scrollTop;
 };
 
 SimilarityMatrixManager.prototype.handleMouseLeave = function(event) {
     let sheetMusicManager = this.getSheetMusicManager();
     sheetMusicManager.hideHoriTrackMeasure();
     sheetMusicManager.hideVertTrackMeasure();
+
+    // Restore selection scroll position
+    if (this._selectionScrollTop != null) {
+        sheetMusicManager.getElem().scrollTop = this._selectionScrollTop;
+    }
     
     this.render(false);
 };
