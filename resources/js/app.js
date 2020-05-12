@@ -64,6 +64,10 @@ ViewModel.prototype.getMidi = function() {
     return this._midi;
 };
 
+ViewModel.prototype.getMidiArrayBuffer = function() {
+    return this._midiArrayBuffer;
+};
+
 ViewModel.prototype.setMusicDisplay = function(osmd) {
     this._osmd = osmd;
 };
@@ -96,8 +100,22 @@ ViewModel.prototype.loadMusicEnd = function() {
 };
 
 ViewModel.prototype.loadMusic = function(fn) {
+    let self = this;
+
     this._preloadMusic();
-    let midiPromise = Midi.fromUrl(data_root + fn + '.mid');
+
+    let midiPromise = fetch(data_root + fn + '.mid').then(function(response) {
+        if (response.ok) {
+            return response.arrayBuffer()
+        } else {
+            throw new Error('could not load midi');
+        }
+    }).then(function(arrayBuffer) {
+        self._midiArrayBuffer = arrayBuffer;
+        return new Midi(arrayBuffer);
+    });
+
+    // let midiPromise = Midi.fromUrl(data_root + fn + '.mid');
 
     let musicSheetContainer = this.getVisualizationManager()
                                     .getSheetMusicPlayerManager()
@@ -930,6 +948,9 @@ function SheetMusicPlayerManager(elem, vizManager) {
 
     let sheetMusicContainer = this._elem.querySelector('.music-sheet');
     this._sheetMusicManager = new SheetMusicManager(sheetMusicContainer, this);
+
+    let musicPlayer = this._elem.querySelector('.music-player');
+    this._musicPlayerManager = new MusicPlayerManager(musicPlayer, this);
 }
 
 SheetMusicPlayerManager.prototype.getElem = function() {
@@ -946,6 +967,7 @@ SheetMusicPlayerManager.prototype.getSheetMusicManager = function() {
 
 SheetMusicPlayerManager.prototype.render = function() {
     this._sheetMusicManager.render();
+    this._musicPlayerManager.setup();
 };
 
 // ==================================================
@@ -955,14 +977,82 @@ SheetMusicPlayerManager.prototype.render = function() {
 function MusicPlayerManager(elem, sheetMusicPlayerManager) {
     this._elem = elem;
     this._musicManager = sheetMusicPlayerManager;
+    
+
+    let self = this;
+    this._playing = false;
+    this._playBtn = this._elem.querySelector('.player-play-toggle');
+    this._playBtn.addEventListener('click', function(event) {
+        let icon = this.querySelector('.fa');
+        if (self._playing) {
+            // pause
+            icon.classList.remove('fa-pause');
+            icon.classList.add('fa-play');
+            self._playing = false;
+            self._synth.stopMIDI();
+        } else {
+            // play
+            icon.classList.remove('fa-play');
+            icon.classList.add('fa-pause');
+            self._playing = true;
+
+            self._synth.playMIDI();
+        }
+
+        self._interval = setInterval(function() {
+            let status = self._synth.getPlayStatus();
+            if (self._playing) {
+                console.log(status);
+            }
+
+            if (!status.play) {
+                clearInterval(self._interval);
+            }
+        }, 100);
+    });
+
+    this._stopBtn = this._elem.querySelector('.player-stop');
+    this._stopBtn.addEventListener('click', function(event) {
+        if (self._playing) {
+            // stop playing
+            self._synth.stopMIDI();
+        }
+
+        // Clear interval
+        clearInterval(self._interval);
+
+        self._playing = false;
+        
+        // change to play icon
+        let playIcon = self._playBtn.querySelector('.fa');
+        playIcon.classList.remove('fa-pause');
+        playIcon.classList.add('fa-play');
+
+        // reset to beginning
+        self._synth.locateMIDI(0);
+    });
 }
 
 MusicPlayerManager.prototype.getElem = function() {
     return this._elem;
 };
 
-MusicPlayerManager.prototype.render = function() {
+MusicPlayerManager.prototype.getViewModel = function() {
+    return this._musicManager.getViewModel();
+};
 
+MusicPlayerManager.prototype.setup = function() {
+    if (this._synth == null) {
+        this._synth = new WebAudioTinySynth();
+    }
+    this._synth.loadMIDI(this.getViewModel().getMidiArrayBuffer());
+    this._playing = false;
+    clearInterval(this._interval);
+
+    // change to play icon
+    let playIcon = this._playBtn.querySelector('.fa');
+    playIcon.classList.remove('fa-pause');
+    playIcon.classList.add('fa-play');    
 };
 
 // ==================================================

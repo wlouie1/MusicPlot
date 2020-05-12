@@ -12,6 +12,7 @@
     <script src="resources/js/libs/tonejsmidi/Midi.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="resources/js/libs/opensheetmusicdisplay/opensheetmusicdisplay.min.js"></script>
+    <script src='resources/js/libs/webaudiotinysynth/webaudio-tinysynth.min.js'></script>
     <link href="resources/css/app.css" type="text/css" rel="stylesheet">
     <script src="resources/js/app.js"></script>
 </head>
@@ -64,10 +65,10 @@
             </div>
             <div class='music-container'>
                 <div class='music-player'>
-                    <button class="music-player-btn"><i class="fa fa-step-backward"></i></button>
-                    <button class="music-player-btn"><i class="fa fa-stop"></i></button>
-                    <button class="music-player-btn"><i class="fa fa-play"></i></button>
-                    <button class="music-player-btn"><i class="fa fa-step-forward"></i></button>
+                    <button class="music-player-btn player-step-back"><i class="fa fa-step-backward"></i></button>
+                    <button class="music-player-btn player-stop"><i class="fa fa-stop"></i></button>
+                    <button class="music-player-btn player-play-toggle"><i class="fa fa-play"></i></button>
+                    <button class="music-player-btn player-step-forward"><i class="fa fa-step-forward"></i></button>
                 </div>
                 <div class='music-sheet'></div>
             </div>
