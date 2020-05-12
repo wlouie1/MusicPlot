@@ -988,7 +988,7 @@ SheetMusicPlayerManager.prototype.getSheetMusicManager = function() {
 
 SheetMusicPlayerManager.prototype.setPlayMeasureInd = function(measureInd) {
     if (measureInd == null) {
-        
+        this._sheetMusicManager.moveCursorToMeasureInd(0);
         return;
     }
     this._sheetMusicManager.moveCursorToMeasureInd(measureInd);
@@ -1006,7 +1006,6 @@ SheetMusicPlayerManager.prototype.render = function() {
 function MusicPlayerManager(elem, sheetMusicPlayerManager) {
     this._elem = elem;
     this._musicManager = sheetMusicPlayerManager;
-    
 
     let self = this;
     this._playing = false;
@@ -1017,6 +1016,12 @@ function MusicPlayerManager(elem, sheetMusicPlayerManager) {
 
     this._stopBtn = this._elem.querySelector('.player-stop');
     this._stopBtn.addEventListener('click', this.stop.bind(this));
+
+    this._forwardBtn = this._elem.querySelector('.player-step-forward');
+    this._forwardBtn.addEventListener('click', this.stepForward.bind(this));
+
+    this._backwardBtn = this._elem.querySelector('.player-step-backward');
+    this._backwardBtn.addEventListener('click', this.stepBackward.bind(this));
 }
 
 MusicPlayerManager.prototype.getElem = function() {
@@ -1084,6 +1089,35 @@ MusicPlayerManager.prototype.stop = function() {
 
     // reset to beginning
     this._synth.locateMIDI(0);
+    this.getViewModel().setPlayMeasureInd(null);
+};
+
+MusicPlayerManager.prototype.stepForward = function() {
+    this.pause();
+
+    // Calculate next measure index
+    let status = this._synth.getPlayStatus();
+    let currMeasureInd = this._tickToMeasureInd(status.curTick);
+    let nextMeasureInd = Math.min(currMeasureInd + 1, this._midiMeasureTicks.length - 1);
+    let nextMeasureTick = this._measureIndToTick(nextMeasureInd);
+
+    // Move to new measure index
+    this._synth.locateMIDI(nextMeasureTick);
+    this.getViewModel().setPlayMeasureInd(nextMeasureInd);
+};
+
+MusicPlayerManager.prototype.stepBackward = function() {
+    this.pause();
+
+    // Calculate previous measure index
+    let status = this._synth.getPlayStatus();
+    let currMeasureInd = this._tickToMeasureInd(status.curTick);
+    let prevMeasureInd = Math.max(currMeasureInd - 1, 0);
+    let prevMeasureTick = this._measureIndToTick(prevMeasureInd);
+
+    // Move to new measure index
+    this._synth.locateMIDI(prevMeasureTick);
+    this.getViewModel().setPlayMeasureInd(prevMeasureInd);
 };
 
 MusicPlayerManager.prototype._computeMidiMeasureTicks = function() {
