@@ -25,14 +25,14 @@ const instrument_image = [
 
 const data_root = 'resources/data/';
 const example_music = [
-    'beethoven_fur_elise',
-    // 'bwv582',
-    'mozart_eine_kleine',
-    // 'mary_had_a_little_lamb_VLN',
-    // 'beethoven_sym5_mvt1_ORCH',
-    // 'Lady_Gaga_-_poker_face'
-    'bach_846',
-    '988-aria'
+    'Beethoven - Fur Elise (Simple)',
+    'Beethoven - Fur Elise (Complete)',
+    'Bach - Aria BWV988',
+    'Greensleeves',
+    'Super Mario Bros Overworld',
+    'Pokemon Center RBY',
+    'Pokemon RBY Route 1',
+    'The Beatles - Hey Jude'
 ];
 
 // ==================================================
@@ -1108,6 +1108,13 @@ MusicPlayerManager.prototype.play = function() {
         let status = self._synth.getPlayStatus();
 
         if (status.curTick >= status.maxTick) {
+            // Wait for last note to be played
+            // TODO: get the exact timing right by
+            // waiting for the duration of last note.
+            // for now use 1 second.
+            // setTimeout(function() {
+            //     self.stop();
+            // }, 1000);
             self.stop();
             return;
         }
