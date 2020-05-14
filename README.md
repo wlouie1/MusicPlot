@@ -8,17 +8,7 @@ Read the paper [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/music
 
 Watch a video demo [here](https://youtu.be/gc5JMgvbsPM)
 
-## Development Process
-### Work Distribution
-As the sole member of this project, every aspect was completed by yours truly.
-
-### Schedule Breakdown
-The task and time breakdown is roughly as follows (total time spent is ~250 hours):
-
-1. Visual design (~5 hours): This overlaps with Interaction design and Development below, and involves playing with various layouts on paper, and trying them out in code.
-2. Interaction design (~5 hours): This overlaps with Visual design and Development, and involves a lot of brainstorming and trying things out in code. Oftentimes, ideas end up being janky, too complicated to implement, or not performant when implemented in code.
-3. Development (~230 hours): Around 20% the time is spent trying out and throwing out visual/interaction ideas in code, 40% of the time is spent debugging, and the remaining 40% of the time is spent on solid development that made it to the final product. On the debugging front, much of the time is spent on trying to figure out how to implement audio playback, MIDI file parsing, music sheet rendering, and syncing up the two views.
-4. Paper and Video Demo (~10 hours)
+![musicplot](resources/images/graphical_abstract.png)
 
 ## Resources
 Third-party tools and data used are explicitly outlined below:
