@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MusicPlot</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="resources/images/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="resources/images/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="resources/images/favicon/favicon-16x16.png">
+    <link rel="manifest" href="resources/images/favicon/site.webmanifest">
+    <script src='resources/js/libs/nprogress/nprogress.js'></script>
+    <link rel='stylesheet' href='resources/css/libs/nprogress.css'/>
+    <script src="resources/js/libs/tonejsmidi/Midi.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="resources/js/libs/opensheetmusicdisplay/opensheetmusicdisplay.min.js"></script>
+    <script src='resources/js/libs/webaudiotinysynth/webaudio-tinysynth.min.js'></script>
+    <link href="resources/css/app.css" type="text/css" rel="stylesheet">
+    <script src="resources/js/app.js"></script>
+</head>
+<body>
+    <div class='container'>
+        <div class='header-container'>
+            <div class='music-select-container'>
+                <div style='pointer-events: all;'>
+                    <label for="music-select">Piece:</label>
+                    <select name="piece" id="music-select">
+                    </select>
+                </div>
+            </div>
+            <h1 class='header-title'>MusicPlot</h1>
+            <a id="forkme_banner" href="https://github.mit.edu/6894-sp20/FP-Music-Plot">View on GitHub</a>
+        </div>
+        <div class='viz-container'>
+            <div class='sim-matrix-container'>
+                <div class='sim-h-track-container'>
+                    <div class='sim-tracks sim-h-tracks'></div>
+                    <div class='sim-track-selected sim-h-track-selected'></div>
+                </div>
+                <div class='sim-v-track-matrix-container'>
+                    <div class='sim-v-track-container'>
+                        <div class='sim-tracks sim-v-tracks'></div>
+                        <div class='sim-track-selected sim-v-track-selected'></div>
+                    </div>
+                    <div style='flex: 1 0 auto;height:100%;font-size:0'>
+                        <canvas class='sim-matrix invisible' width="5" height="5"></canvas>
+                    </div>
+                </div>
+                <div class='sim-matrix-controls-container'>
+                    <div class='sim-matrix-controls-row'>
+                        <span style='font-weight:bold;'>Binarize Similarity</span>
+                        <label class="switch">
+                            <input class='matrix-binarize-toggle' type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <input class='matrix-binarize-thres-slider' type="range" value="0.5" min="0" max="1" step="0.05">
+                        <span class='matrix-binarize-thres-value'>0.50</span>
+                    </div>
+                    <div class='sim-matrix-controls-row' style='display:none;'>
+                        <span style='font-weight:bold;'>Auto-Scroll Music</span>
+                        <label class="switch">
+                            <input class='music-scroll-toggle' type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <a href="https://github.mit.edu/6894-sp20/FP-Music-Plot"
+                    class="help-button fa fa-question-circle"
+                    title="More Information" target="_blank" role="button">
+                </a>
+            </div>
+            <div class='music-container'>
+                <div class='music-player'>
+                    <button class="music-player-btn player-step-backward"><i class="fa fa-step-backward"></i></button>
+                    <button class="music-player-btn player-stop"><i class="fa fa-stop"></i></button>
+                    <button class="music-player-btn player-play-toggle"><i class="fa fa-play"></i></button>
+                    <button class="music-player-btn player-step-forward"><i class="fa fa-step-forward"></i></button>
+                </div>
+                <div class='music-sheet'></div>
+            </div>
+        </div>
+        <div class="matrix-tooltip tooltip invisible">
+            <div class="tooltip-content-container">
+                <div class="tooltip-content">
+                    <div class="matrix-tooltip-l1"></div>
+                    <div class="matrix-tooltip-l2"></div>
+                    <div class="matrix-tooltip-l3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
