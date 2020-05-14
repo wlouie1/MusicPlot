@@ -1,10 +1,10 @@
 # MusicPlot
 
-View the Project Page [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/)
+View the Project Page [here](https://wlouie1.github.io/MusicPlot/)
 
-Play with MusicPlot [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/musicplot.html)
+Play with MusicPlot [here](https://wlouie1.github.io/MusicPlot/musicplot.html)
 
-Read the paper [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/musicplot_paper.pdf)
+Read the paper [here](https://wlouie1.github.io/MusicPlot/musicplot_paper.pdf)
 
 Watch a video demo [here](https://youtu.be/gc5JMgvbsPM)
 
