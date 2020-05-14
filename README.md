@@ -1,4 +1,4 @@
-# FP-Music-Plot
+# MusicPlot
 
 View the Project Page [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/)
 
