@@ -1,18 +1,45 @@
 # FP-Music-Plot
 
-## Domain and Goals
-This project presents an interactive music visualization system that employs self-similarity matrices. Visualizing music via self-similarity is not a new idea; [Wolkowicz et al.](https://pdfs.semanticscholar.org/ceda/27fd01f945970bbe6ebacf98ce7a05ca8120.pdf) presented such a visualization system in 2009 that can visualize music encoded in MIDI files. However, their system simply generates a single image, and tries to pack information from all tracks in the MIDI files by overlaying a bunch of self-similarity matrices together. The result is something that can often times be hard to read due to the clutter. Furthermore, their system can benefit from interactive features such as zoom, selection, and playback. This project serves to address these shortcomings, and the hope is that this visualization would allow even laymen who can't read musical notation to interact with, and learn the structure of a piece of music. Any collection of MIDI files would work with this system, but for this project I used the [Classical MIDI dataset](https://www.kaggle.com/soumikrakshit/classical-music-midi).
+View the Project Page [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/)
 
-## Prototype Demo
-https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/
+Play with MusicPlot [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/musicplot.html)
 
-Box i, j on the similarity matrix shows the similarity between measure i of the vertical track and measure j of the horizontal track. I'll write out the math more formally later, but think of similarity as a function of note composition and rhythm; it ranges from 0 to 1, with 1 being 100% identical. In the current demo, the similarity score is binarized using a 0.5 threshold, such that white signifies a similarity > 0.5, and black otherwise.
+Read the paper [here](https://github.mit.edu/pages/6894-sp20/FP-Music-Plot/musicplot_paper.pdf)
 
-## Mockup of TODOs
-![alt text](mockup_todos.png "Logo Title Text 1")
-I will be tweaking the demo, so this mockup may become stale over time.
+Watch a video demo [here](https://youtu.be/gc5JMgvbsPM)
 
-## Desired Feedback
-- Anything confusing? What would make it less confusing?
-- Are there any features you feel I should add or take out?
-- Any comments appreciated!
+## Development Process
+### Work Distribution
+As the sole member of this project, every aspect was completed by yours truly.
+
+### Schedule Breakdown
+The task and time breakdown is roughly as follows (total time spent is ~250 hours):
+
+1. Visual design (~5 hours): This overlaps with Interaction design and Development below, and involves playing with various layouts on paper, and trying them out in code.
+2. Interaction design (~5 hours): This overlaps with Visual design and Development, and involves a lot of brainstorming and trying things out in code. Oftentimes, ideas end up being janky, too complicated to implement, or not performant when implemented in code.
+3. Development (~230 hours): Around 20% the time is spent trying out and throwing out visual/interaction ideas in code, 40% of the time is spent debugging, and the remaining 40% of the time is spent on solid development that made it to the final product. On the debugging front, much of the time is spent on trying to figure out how to implement audio playback, MIDI file parsing, music sheet rendering, and syncing up the two views.
+4. Paper and Video Demo (~10 hours)
+
+## Resources
+Third-party tools and data used are explicitly outlined below:
+
+### Dataset (MIDI files)
+* [Beethoven - Fur Elise (Simple)](https://www.8notes.com/scores/457.asp)
+* [Beethoven - Fur Elise (Complete)](https://musescore.com/user/20846/scores/35882)
+* [Bach - Aria BWV988](http://www.jsbach.net/midi/index.html)
+* [Greensleeves](https://www.contemplator.com/england/grenslevs.html)
+* [Super Mario Bros Overworld](https://www.khinsider.com/midi/nes/super-mario-bros.)
+* [Pokemon Center RBY](https://www.khinsider.com/midi/gameboy/pokemon-red-blue-yellow-)
+* [Pokemon RBY Route 1](https://www.khinsider.com/midi/gameboy/pokemon-red-blue-yellow-)
+* [The Beatles - Hey Jude](https://www.youtube.com/watch?v=df7od9Mx0AQ)
+
+### Third Party Tools
+* [NProgress](https://github.com/rstacruz/nprogress): For loading progress.
+* [ToneJS Midi Parser](https://github.com/Tonejs/Midi): For MIDI file parsing.
+* [WebAudio Tiny GM mapped Synthesizer](https://github.com/g200kg/webaudio-tinysynth): For MIDI audio playback.
+* [OpenSheetMusicDisplay](https://github.com/opensheetmusicdisplay/opensheetmusicdisplay): For music sheet rendering.
+
+### Miscellaneous Resources
+* [Musical Note Favicon](https://favicon.io/emoji-favicons/musical-note/): For the page's favicon (browser tab icon).
+* [Flaticon](https://www.flaticon.com/): For musical track instrument icons.
+* [Musescore](https://musescore.org/en): For exporting MusicXML files from MIDI source, and loaded by OpenSheetMusicDisplay to render the music sheet.
